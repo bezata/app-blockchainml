@@ -118,7 +118,7 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
 
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-white">
-          {dataset.cardData.pretty_name}
+          {dataset.cardData?.pretty_name}
         </h1>
       </div>
 
@@ -139,16 +139,16 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
               <strong>Downloads:</strong> {dataset.downloads}
             </p>
             <p>
-              <strong>License:</strong> {dataset.cardData.license.join(", ")}
+              <strong>License:</strong> {dataset.cardData?.license.join(", ")}
             </p>
             <p>
-              <strong>Language:</strong> {dataset.cardData.language.join(", ")}
+              <strong>Language:</strong> {dataset.cardData?.language.join(", ")}
             </p>
-            {dataset.cardData.paperswithcode_id && (
+            {dataset.cardData?.paperswithcode_id && (
               <p>
                 <strong>Paper:</strong>{" "}
                 <a
-                  href={`https://paperswithcode.com/dataset/${dataset.cardData.paperswithcode_id}`}
+                  href={`https://paperswithcode.com/dataset/${dataset.cardData?.paperswithcode_id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-400 hover:underline"
@@ -169,7 +169,7 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
             <p>
               <strong>Total Size:</strong>{" "}
               {(
-                dataset.cardData.dataset_info.dataset_size /
+                dataset.cardData?.dataset_info.dataset_size /
                 1024 /
                 1024
               ).toFixed(2)}{" "}
@@ -178,7 +178,7 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
             <p>
               <strong>Download Size:</strong>{" "}
               {(
-                dataset.cardData.dataset_info.download_size /
+                dataset.cardData?.dataset_info.download_size /
                 1024 /
                 1024
               ).toFixed(2)}{" "}
@@ -186,9 +186,9 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
             </p>
             <p>
               <strong>Number of Splits:</strong>{" "}
-              {dataset.cardData.dataset_info.splits.length}
+              {dataset.cardData?.dataset_info.splits.length}
             </p>
-            {dataset.cardData.dataset_info.splits.map((split) => (
+            {dataset.cardData?.dataset_info.splits.map((split) => (
               <p key={split.name}>
                 <strong>{split.name}:</strong>{" "}
                 {split.num_examples.toLocaleString()} examples
@@ -228,8 +228,8 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
                   <SelectValue placeholder="Select split" />
                 </SelectTrigger>
                 <SelectContent>
-                  {dataset.cardData.dataset_info.splits.map((split) => (
-                    <SelectItem key={split.name} value={split.name}>
+                  {dataset.cardData?.dataset_info.splits.map((split) => (
+                    <SelectItem key={split?.name} value={split.name}>
                       {split.name}
                     </SelectItem>
                   ))}
@@ -317,7 +317,7 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
                     href={`/dataset/${relatedDataset.id}`}
                     className="text-blue-400 hover:underline"
                   >
-                    {relatedDataset.cardData.pretty_name}
+                    {relatedDataset.cardData?.pretty_name}
                   </Link>
                 </li>
               ))}
