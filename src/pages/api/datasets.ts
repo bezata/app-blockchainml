@@ -21,7 +21,7 @@ export default async function handler(
 
   try {
     const response = await fetch(
-      "https://huggingface.co/api/datasets?&full=true",
+      "https://huggingface.co/api/datasets?limit=500&full=true",
       {
         headers: {
           Authorization: `Bearer ${huggingFaceApiKey}`,

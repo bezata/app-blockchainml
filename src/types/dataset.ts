@@ -6,39 +6,22 @@ export interface Dataset {
   author: string;
   cardData: {
     pretty_name: string;
-    annotations_creators: string[];
-    language_creators: string[];
-    language: string[];
-    license: string[];
-    multilinguality: string[];
-    size_categories: string[];
-    source_datasets: string[];
     task_categories: string[];
-    task_ids: string[];
+    size_categories: string[];
+    license: string[];
+    language: string[];
     paperswithcode_id: string;
-    tags: string[];
     dataset_info: {
-      features: Array<{
-        name: string;
-        dtype: string;
-      }>;
+      dataset_size: number;
+      download_size: number;
       splits: Array<{
         name: string;
-        num_bytes: number;
         num_examples: number;
       }>;
-      download_size: number;
-      dataset_size: number;
     };
   };
-  disabled: boolean;
-  gated: boolean;
   lastModified: string;
-  likes: number;
-  private: boolean;
-  sha: string;
-  description: string;
   downloads: number;
   tags: string[];
-  createdAt: string;
+  description: string;
 }

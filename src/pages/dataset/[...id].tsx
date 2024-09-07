@@ -4,27 +4,39 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import DatasetProfile from "@/components/DatasetProfile";
 import { Dataset } from "@/types/dataset";
+import FuturisticLoadingScreen from "@/components/ui/loadingscreen";
+import ErrorPage from "@/components/ui/errorpage";
 
 export default function DatasetProfilePage() {
   const [dataset, setDataset] = useState<Dataset | null>(null);
+  const [allDatasets, setAllDatasets] = useState<Dataset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { id } = router.query;
 
   useEffect(() => {
-    async function fetchDataset() {
+    async function fetchData() {
       if (!id) return;
 
       const datasetId = Array.isArray(id) ? id.join("/") : id;
 
       try {
-        const response = await fetch(`/api/dataset/${datasetId}`);
-        if (!response.ok) {
+        // Fetch the specific dataset
+        const datasetResponse = await fetch(`/api/dataset/${datasetId}`);
+        if (!datasetResponse.ok) {
           throw new Error("Failed to fetch dataset");
         }
-        const data = await response.json();
-        setDataset(data);
+        const datasetData = await datasetResponse.json();
+        setDataset(datasetData);
+
+        // Fetch all datasets
+        const allDatasetsResponse = await fetch("/api/datasets");
+        if (!allDatasetsResponse.ok) {
+          throw new Error("Failed to fetch all datasets");
+        }
+        const allDatasetsData = await allDatasetsResponse.json();
+        setAllDatasets(allDatasetsData);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
@@ -32,15 +44,11 @@ export default function DatasetProfilePage() {
       }
     }
 
-    fetchDataset();
+    fetchData();
   }, [id]);
 
   if (isLoading) {
-    return (
-      <div className="p-6 bg-gray-900 min-h-screen text-white">
-        Loading dataset...
-      </div>
-    );
+    return <FuturisticLoadingScreen />;
   }
 
   if (error) {
@@ -52,12 +60,8 @@ export default function DatasetProfilePage() {
   }
 
   if (!dataset) {
-    return (
-      <div className="p-6 bg-gray-900 min-h-screen text-white">
-        Dataset not found
-      </div>
-    );
+    return <ErrorPage />;
   }
 
-  return <DatasetProfile dataset={dataset} />;
+  return <DatasetProfile dataset={dataset} allDatasets={allDatasets} />;
 }

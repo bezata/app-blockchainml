@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
 import DatasetsList from "@/components/DatasetsList";
+import dynamic from "next/dynamic";
+import FuturisticErrorPage from "@/components/ui/errorpage";
+
+const FuturisticLoadingScreen = dynamic(
+  () => import("@/components/ui/loadingscreen"),
+  { ssr: false }
+);
 
 export default function Datasets() {
   const [datasets, setDatasets] = useState([]);
@@ -27,16 +34,16 @@ export default function Datasets() {
 
   if (isLoading) {
     return (
-      <div className="p-6 bg-gray-900 min-h-screen text-white">
-        Loading datasets...
+      <div>
+        <FuturisticLoadingScreen />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6 bg-gray-900 min-h-screen text-white">
-        Error: {error}
+      <div>
+        <FuturisticErrorPage />
       </div>
     );
   }
