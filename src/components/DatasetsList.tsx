@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -137,33 +137,104 @@ export default function BlockchainMLDatasetBrowser({
     }));
   }, [categorizedTags, tagSearchTerm]);
 
-  const TagsContent = () => (
-    <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
-      <Input
-        placeholder="Search tags"
-        value={tagSearchTerm}
-        onChange={(e) => setTagSearchTerm(e.target.value)}
-        className="mb-4"
-      />
-      {filteredTags.map(({ category, tags }) => (
-        <div key={category} className="mb-4">
-          <h3 className="text-sm font-medium text-gray-400 mb-2">{category}</h3>
-          <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <Badge
-                key={tag}
-                variant={selectedTags.includes(tag) ? "default" : "secondary"}
-                className="cursor-pointer text-xs"
-                onClick={() => toggleTag(tag)}
+  const TagsContent = () => {
+    const [tagSearchTerm, setTagSearchTerm] = useState("");
+    const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+    // Calculate the number of selected tags per category
+    const getSelectedTagCount = (category: string) => {
+      const tagsInCategory =
+        filteredTags.find((c) => c.category === category)?.tags || [];
+      return tagsInCategory.filter((tag) => selectedTags.includes(tag)).length;
+    };
+
+    // Handle scroll to category
+    const handleScrollToCategory = (category: string) => {
+      if (categoryRefs.current[category]) {
+        categoryRefs.current[category]?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    };
+
+    const filteredTags = useMemo(() => {
+      return categorizedTags.map((category) => ({
+        ...category,
+        tags: category.tags.filter((tag) =>
+          getTagDisplayText(tag)
+            .toLowerCase()
+            .includes(tagSearchTerm.toLowerCase())
+        ),
+      }));
+    }, [categorizedTags, tagSearchTerm]);
+
+    return (
+      <div className="flex flex-col space-y-4">
+        {/* Buttons for Category List */}
+        <div className="flex flex-wrap gap-2">
+          {filteredTags.map(({ category }) => {
+            const count = getSelectedTagCount(category);
+            return (
+              <Button
+                key={category}
+                variant="ghost"
+                onClick={() => handleScrollToCategory(category)}
+                className="text-gray-300 hover:text-white relative"
               >
-                {getTagDisplayText(tag)}
-              </Badge>
-            ))}
-          </div>
+                {category}
+                {count > 0 && (
+                  <span className="absolute right-0 text-xs text-white">
+                    {count}
+                  </span>
+                )}
+              </Button>
+            );
+          })}
         </div>
-      ))}
-    </div>
-  );
+        <Input
+          placeholder="Search tags"
+          value={tagSearchTerm}
+          onChange={(e) => setTagSearchTerm(e.target.value)}
+          className="mb-4"
+        />
+        {/* Input and Scrollable Tags Content */}
+        <div
+          className="max-h-[calc(100vh-200px)] overflow-y-auto"
+          style={{
+            scrollbarWidth: "none" /* Firefox */,
+            msOverflowStyle: "none" /* IE and Edge */,
+          }}
+        >
+          {filteredTags.map(({ category, tags }) => (
+            <div
+              key={category}
+              ref={(el) => (categoryRefs.current[category] = el)}
+              className="mb-4"
+            >
+              <h3 className="text-sm font-medium text-gray-400 mb-2">
+                {category}
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant={
+                      selectedTags.includes(tag) ? "default" : "secondary"
+                    }
+                    className="cursor-pointer text-xs"
+                    onClick={() => toggleTag(tag)}
+                  >
+                    {getTagDisplayText(tag)}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex h-screen bg-gray-900">
