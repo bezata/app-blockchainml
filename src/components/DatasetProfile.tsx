@@ -206,104 +206,107 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
           <p>{dataset.description}</p>
         </CardContent>
       </Card>
+      <div className="flex flex-row">
+        <Card className="bg-gray-800 border-gray-700 mb-6">
+          <CardHeader>
+            <CardTitle className="text-white">Tags</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {Object.entries(categorizedTags).map(([category, tags]) => (
+              <div
+                key={category}
+                className="mb-4 grid grid-cols-7 gap-2 md:grid-cols-2"
+              >
+                <h3 className="text-sm font-medium text-gray-400 mb-2">
+                  {category}:
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant={selectedTag === tag ? "default" : "secondary"}
+                      className="cursor-pointer"
+                      onClick={() =>
+                        setSelectedTag(selectedTag === tag ? null : tag)
+                      }
+                    >
+                      {tag.split(":")[1]}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
 
-      <Card className="bg-gray-800 border-gray-700 mb-6">
-        <CardHeader>
-          <CardTitle className="text-white">Download Dataset</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center space-x-4">
-            <Select onValueChange={setSelectedFormat} defaultValue="parquet">
-              <SelectTrigger className="w-[180px] bg-gray-700 text-white">
-                <SelectValue placeholder="Select format" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="parquet">Parquet</SelectItem>
-                <SelectItem value="croissant">Croissant</SelectItem>
-              </SelectContent>
-            </Select>
-            {selectedFormat === "parquet" && (
-              <Select onValueChange={setSelectedSplit}>
+        <Card className="bg-gray-800 border-gray-700 mb-6 w-full">
+          <CardHeader>
+            <CardTitle className="text-white">Download Dataset</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <Select onValueChange={setSelectedFormat} defaultValue="parquet">
                 <SelectTrigger className="w-[180px] bg-gray-700 text-white">
-                  <SelectValue placeholder="Select split" />
+                  <SelectValue placeholder="Select format" />
                 </SelectTrigger>
                 <SelectContent>
-                  {dataset.cardData.dataset_info.splits.map((split) => (
-                    <SelectItem key={split.name} value={split.name}>
-                      {split.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="parquet">Parquet</SelectItem>
+                  <SelectItem value="croissant">Croissant</SelectItem>
                 </SelectContent>
               </Select>
-            )}
+              {selectedFormat === "parquet" && (
+                <Select onValueChange={setSelectedSplit}>
+                  <SelectTrigger className="w-[180px] bg-gray-700 text-white">
+                    <SelectValue placeholder="Select split" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dataset.cardData.dataset_info.splits.map((split) => (
+                      <SelectItem key={split.name} value={split.name}>
+                        {split.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Button
+                onClick={handleDownload}
+                disabled={
+                  (selectedFormat === "parquet" && !selectedSplit) ||
+                  !selectedFormat
+                }
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Download className="mr-2 h-4 w-4" /> Download
+              </Button>
+            </div>
             <Button
-              onClick={handleDownload}
-              disabled={
-                (selectedFormat === "parquet" && !selectedSplit) ||
-                !selectedFormat
-              }
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              variant="outline"
+              className="text-gray-300 hover:bg-gray-700"
+              onClick={() => setShowInfo(!showInfo)}
             >
-              <Download className="mr-2 h-4 w-4" /> Download
+              {showInfo ? (
+                <ChevronUp className="mr-2 h-4 w-4" />
+              ) : (
+                <ChevronDown className="mr-2 h-4 w-4" />
+              )}
+              Download Information
             </Button>
-          </div>
-          <Button
-            variant="outline"
-            className="text-gray-300 hover:bg-gray-700"
-            onClick={() => setShowInfo(!showInfo)}
-          >
-            {showInfo ? (
-              <ChevronUp className="mr-2 h-4 w-4" />
-            ) : (
-              <ChevronDown className="mr-2 h-4 w-4" />
-            )}
-            Download Information
-          </Button>
-          {showInfo && (
-            <div className="mt-4 p-4 bg-gray-700 rounded-md text-gray-300">
-              <h4 className="font-semibold mb-2">Download Options:</h4>
-              <p>
-                <strong>Parquet:</strong> Download individual splits of the
-                dataset in Parquet format.
-              </p>
-              <p>
-                <strong>Croissant:</strong> Download the entire dataset in
-                Croissant format, which includes metadata and all splits.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gray-800 border-gray-700 mb-6">
-        <CardHeader>
-          <CardTitle className="text-white">Tags</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {Object.entries(categorizedTags).map(([category, tags]) => (
-            <div key={category} className="mb-4">
-              <h3 className="text-sm font-medium text-gray-400 mb-2">
-                {category}:
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant={selectedTag === tag ? "default" : "secondary"}
-                    className="cursor-pointer"
-                    onClick={() =>
-                      setSelectedTag(selectedTag === tag ? null : tag)
-                    }
-                  >
-                    {tag.split(":")[1]}
-                  </Badge>
-                ))}
+            {showInfo && (
+              <div className="mt-4 p-4 bg-gray-700 rounded-md text-gray-300">
+                <h4 className="font-semibold mb-2">Download Options:</h4>
+                <p>
+                  <strong>Parquet:</strong> Download individual splits of the
+                  dataset in Parquet format.
+                </p>
+                <p>
+                  <strong>Croissant:</strong> Download the entire dataset in
+                  Croissant format, which includes metadata and all splits.
+                </p>
               </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
+            )}
+          </CardContent>
+        </Card>
+      </div>
       {selectedTag && relatedDatasets.length > 0 && (
         <Card className="bg-gray-800 border-gray-700 mb-6">
           <CardHeader>

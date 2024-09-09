@@ -1,4 +1,5 @@
 import React, { useState, useRef, useMemo } from "react";
+import { Sidebar_Navigation } from "./component/SidebarNavigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -239,69 +240,12 @@ export default function BlockchainMLDatasetBrowser({
   return (
     <div className="flex h-screen bg-gray-900">
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 border-r border-gray-700">
-        <div className="p-4">
-          <div className="flex items-center mb-6">
-            <img
-              src="/blockchainml.png"
-              alt="BlockchainML"
-              className="h-8 mr-2"
-            />
-            <span className="text-xl font-bold text-white">BlockchainML</span>
-          </div>
-          <nav className="space-y-2">
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"
-            >
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              Dashboard
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-white bg-gray-700"
-            >
-              <Database className="mr-2 h-4 w-4" />
-              Datasets
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"
-            >
-              <Box className="mr-2 h-4 w-4" />
-              Models
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"
-            >
-              <BookMarked className="mr-2 h-4 w-4" />
-              Saved Items
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </Button>
-          </nav>
-        </div>
-        <div className="absolute bottom-4 left-4">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-900"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Log out
-          </Button>
-        </div>
-      </aside>
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <header className="bg-gray-800 border-b border-gray-700 p-4">
+        <header className="bg-gray-800 border-b border-gray-700 p-4 sticky top-0 z-50">
           <div className="flex items-center justify-between">
+            <Sidebar_Navigation />
             <div className="relative flex-grow max-w-md">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
               <Input
@@ -341,16 +285,6 @@ export default function BlockchainMLDatasetBrowser({
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-grow">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                className="w-full pl-10 pr-4 py-2 rounded-md border border-gray-600 bg-gray-800 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 transition-all"
-                placeholder="Search datasets"
-                type="search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
             <Sheet>
               <SheetTrigger asChild>
                 <Button
