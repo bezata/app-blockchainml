@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { NavBar } from "./component/nav-bar";
 import {
   Search,
   LayoutDashboard,
@@ -23,78 +24,19 @@ import { useRouter } from "next/router";
 export function BlockchainMlApp() {
   const router = useRouter();
   return (
-    <div className="flex h-screen bg-gray-900">
+    <div className="flex h-screen bg-gray-300">
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 border-r border-gray-700">
-        <div className="p-4">
-          <div className="pr-2">
-            <Image
-              src="/blockchainml.png"
-              alt="BlockchainML"
-              width={64}
-              height={64}
-            />
-          </div>
-          <nav className="space-y-2">
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"
-            >
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              Dashboard
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"
-              onClick={() => router.push("/datasets")}
-            >
-              <Database className="mr-2 h-4 w-4" />
-              Datasets
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"
-              onClick={() => router.push("/models")}
-            >
-              <Box className="mr-2 h-4 w-4" />
-              Models
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"
-            >
-              <BookMarked className="mr-2 h-4 w-4" />
-              Saved Items
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-700"
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </Button>
-          </nav>
-        </div>
-        <div className="absolute bottom-4 left-4">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-900"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Log out
-          </Button>
-        </div>
-      </aside>
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
         {/* Header */}
-        <header className="bg-gray-800 border-b border-gray-700 p-4">
+        <header className="night border-b border-gray-700 p-4">
           <div className="flex items-center justify-between">
-            <div className="relative">
+            <NavBar />
+            <div className="relative flex-grow max-w-md">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
               <Input
-                className="w-full pl-8 pr-4 py-2 rounded-md border border-gray-600 bg-gray-700 text-white placeholder-gray-400"
+                className="w-full pl-8 pr-4 py-2 rounded-md border border-gray-600 bg-gray-300 text-black placeholder-gray-500"
                 placeholder="Search datasets and models"
                 type="search"
               />
@@ -116,11 +58,11 @@ export function BlockchainMlApp() {
 
         {/* Dashboard Content */}
         <div className="p-6">
-          <h1 className="text-2xl font-bold mb-6 text-white">Dashboard</h1>
+          <h1 className="text-2xl font-bold mb-6 text-black">Dashboard</h1>
 
           {/* Overview Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <Card className="bg-gray-800 border-gray-700">
+            <Card className="night border-gray-700">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-300">
                   Total Downloads
@@ -132,7 +74,7 @@ export function BlockchainMlApp() {
                 <p className="text-xs text-gray-400">+20.1% from last month</p>
               </CardContent>
             </Card>
-            <Card className="bg-gray-800 border-gray-700">
+            <Card className="night border-gray-700">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-300">
                   Active Models
@@ -144,7 +86,7 @@ export function BlockchainMlApp() {
                 <p className="text-xs text-gray-400">+2 new this week</p>
               </CardContent>
             </Card>
-            <Card className="bg-gray-800 border-gray-700">
+            <Card className="night border-gray-700">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-300">
                   Saved Items
@@ -159,10 +101,10 @@ export function BlockchainMlApp() {
           </div>
 
           {/* Recent Items */}
-          <h2 className="text-xl font-semibold mb-4 text-white">
+          <h2 className="text-xl font-semibold mb-4 text-black">
             Recent Items
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className=" grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
               {
                 type: "Dataset",
@@ -189,7 +131,7 @@ export function BlockchainMlApp() {
                 badge: "Premium",
               },
             ].map((item, index) => (
-              <Card key={index} className="bg-gray-800 border-gray-700">
+              <Card key={index} className="night border-gray-700">
                 <CardHeader className="flex flex-row items-start justify-between space-y-0">
                   <div>
                     <Badge

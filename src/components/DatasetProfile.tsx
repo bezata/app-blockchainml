@@ -107,23 +107,23 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
   };
 
   return (
-    <div className="p-6 bg-gray-900 min-h-screen">
+    <div className="p-6 bg-gray-300 min-h-screen">
       <Button
         variant="outline"
-        className="mb-6 border-gray-600 text-gray-300 hover:bg-gray-700"
+        className="mb-6 border-gray-600 night text-black hover:bg-gray-700"
         onClick={() => router.back()}
       >
         <ArrowLeft className="mr-2 h-4 w-4" /> Back to Datasets
       </Button>
 
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-white">
+        <h1 className="text-2xl font-bold text-black">
           {dataset.cardData.pretty_name}
         </h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="night border-gray-700">
           <CardHeader>
             <CardTitle className="text-white">Dataset Information</CardTitle>
           </CardHeader>
@@ -161,44 +161,48 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="night border-gray-700">
           <CardHeader>
             <CardTitle className="text-white">Dataset Statistics</CardTitle>
           </CardHeader>
-          <CardContent className="text-gray-300">
-            <p>
-              <strong>Total Size:</strong>{" "}
-              {(
-                dataset.cardData.dataset_info.dataset_size /
-                1024 /
-                1024
-              ).toFixed(2)}{" "}
-              MB
-            </p>
-            <p>
-              <strong>Download Size:</strong>{" "}
-              {(
-                dataset.cardData.dataset_info.download_size /
-                1024 /
-                1024
-              ).toFixed(2)}{" "}
-              MB
-            </p>
-            <p>
-              <strong>Number of Splits:</strong>{" "}
-              {dataset.cardData.dataset_info.splits.length}
-            </p>
+          <CardContent className="text-gray-300 ">
+            <div className="flex gap-2">
+              <p className="">Total Size:</p>
+              <strong className="bold">
+                {(
+                  dataset.cardData.dataset_info.dataset_size /
+                  1024 /
+                  1024
+                ).toFixed(2)}{" "}
+                MB
+              </strong>
+            </div>
+            <div className="flex gap-2">
+              <p>Download Size:</p>
+              <strong>
+                {(
+                  dataset.cardData.dataset_info.download_size /
+                  1024 /
+                  1024
+                ).toFixed(2)}{" "}
+                MB
+              </strong>
+            </div>
+            <div className="flex gap-2">
+              <p>Number of Splits:</p>
+              <strong>{dataset.cardData.dataset_info.splits.length}</strong>
+            </div>
             {dataset.cardData.dataset_info.splits.map((split) => (
               <p key={split.name}>
-                <strong>{split.name}:</strong>{" "}
-                {split.num_examples.toLocaleString()} examples
+                {split.name}:{" "}
+                <strong>{split.num_examples.toLocaleString()}</strong> examples
               </p>
             ))}
           </CardContent>
         </Card>
       </div>
 
-      <Card className="bg-gray-800 border-gray-700 mb-6">
+      <Card className="night border-gray-700 mb-6">
         <CardHeader>
           <CardTitle className="text-white">Dataset Description</CardTitle>
         </CardHeader>
@@ -207,7 +211,7 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
         </CardContent>
       </Card>
       <div className="flex flex-row">
-        <Card className="bg-gray-800 border-gray-700 mb-6">
+        <Card className="night border-gray-700 mb-6">
           <CardHeader>
             <CardTitle className="text-white">Tags</CardTitle>
           </CardHeader>
@@ -239,7 +243,7 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700 mb-6 w-full">
+        <Card className="night border-gray-700 mb-6 w-full">
           <CardHeader>
             <CardTitle className="text-white">Download Dataset</CardTitle>
           </CardHeader>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo } from "react";
-import { Sidebar_Navigation } from "./component/SidebarNavigation";
+import { NavBar } from "./component/nav-bar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -238,18 +238,18 @@ export default function BlockchainMLDatasetBrowser({
   };
 
   return (
-    <div className="flex h-screen bg-gray-900">
+    <div className="flex h-screen bg-gray-300 ">
       {/* Sidebar */}
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <header className="bg-gray-800 border-b border-gray-700 p-4 sticky top-0 z-50">
+        <header className="night border-b border-gray-700 p-2 sticky top-0 z-50">
           <div className="flex items-center justify-between">
-            <Sidebar_Navigation />
+            <NavBar />
             <div className="relative flex-grow max-w-md">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 bg-gray-300" />
               <Input
-                className="w-full pl-8 pr-4 py-2 rounded-md border border-gray-600 bg-gray-700 text-white placeholder-gray-400"
+                className="w-full pl-8 pr-4 py-2 rounded-md border border-gray-600 bg-gray-300 text-black placeholder-black"
                 placeholder="Search datasets and models"
                 type="search"
                 value={searchTerm}
@@ -273,11 +273,11 @@ export default function BlockchainMLDatasetBrowser({
 
         <div className="p-6 space-y-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
+            <h1 className="text-3xl font-bold eerieblack  ">
               Blockchain Datasets
             </h1>
             <Button
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+              className="bg-gradient-to-r from-orange-600 to-orange-800 hover:from-orange-600 hover:to-orange-400 text-white"
               onClick={() => router.push("/create-dataset")}
             >
               <Plus className="mr-2 h-4 w-4" /> Create New Dataset
@@ -289,9 +289,9 @@ export default function BlockchainMLDatasetBrowser({
               <SheetTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-full sm:w-auto bg-gray-800 border-gray-600 hover:bg-gray-700"
+                  className="w-full sm:w-auto night border-gray-600 hover:bg-gray-700"
                 >
-                  <Filter className="mr-2 h-4 w-4" />
+                  <Filter className="mr-2 h-4 w-4 " />
                   Filter Tags
                 </Button>
               </SheetTrigger>
@@ -327,11 +327,11 @@ export default function BlockchainMLDatasetBrowser({
             {currentDatasets.map((dataset) => (
               <Card
                 key={dataset._id}
-                className="bg-gray-800 border-gray-700 overflow-hidden group hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300"
+                className="night border-gray-700 overflow-hidden group hover:shadow-lg hover:shadow-black transition-all duration-300"
               >
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors">
+                    <h3 className="text-lg font-semibold text-white ">
                       {dataset.cardData?.pretty_name || "Unnamed Dataset"}
                     </h3>
                     {dataset.isPremium && (
@@ -344,19 +344,25 @@ export default function BlockchainMLDatasetBrowser({
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-gray-400 mb-2">
-                    {dataset.cardData?.task_categories?.join(", ") || "N/A"}
-                  </p>
-                  <p className="text-sm text-gray-400 mb-2">
-                    Size: {dataset.cardData?.size_categories?.[0] || "Unknown"}
-                  </p>
-                  <p className="text-sm text-gray-400 mb-2">
-                    Downloads: {dataset.downloads ?? "N/A"}
-                  </p>
-                  <p className="text-sm text-gray-400 mb-4">
-                    Last Updated:{" "}
-                    {new Date(dataset.lastModified).toLocaleDateString()}
-                  </p>
+
+                  <div className="flex ">
+                    <p className="text-m text-gray-400">Size:</p>
+                    <p className="text-sm text-white ">
+                      {dataset.cardData?.size_categories?.[0] || "Unknown"}
+                    </p>
+                  </div>
+                  <div className="flex ">
+                    <p className="text-m text-gray-400">Downloads:</p>
+                    <p className="text-sm text-white">
+                      {dataset.downloads ?? "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-m text-gray-400"> Last Updated:</p>
+                    <p className="text-sm text-white">
+                      {new Date(dataset.lastModified).toLocaleDateString()}
+                    </p>
+                  </div>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {dataset.tags.slice(0, 3).map((tag) => (
                       <Badge
@@ -380,14 +386,14 @@ export default function BlockchainMLDatasetBrowser({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-blue-400 hover:text-blue-300 hover:bg-blue-900 transition-colors"
+                      className="   bg-green-700 text-white hover:text-green-300 hover:bg-green-900 transition-colors"
                     >
                       <Download className="h-4 w-4 mr-2" /> Download
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-green-400 hover:text-green-300 hover:bg-green-900 transition-colors"
+                      className="bg-blue-700 text-white hover:text-blue-300 hover:bg-blue-900 transition-colors"
                       onClick={() => router.push(`/dataset/${dataset.id}`)}
                     >
                       <Eye className="h-4 w-4 mr-2" /> View

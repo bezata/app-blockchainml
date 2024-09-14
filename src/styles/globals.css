@@ -104,3 +104,30 @@ body {
 .scrollbar-custom::-webkit-scrollbar-track {
   background: transparent; /* Background of the track (scrollbar area) */
 }
+
+.a-white {
+  background-color: rgb(243, 247, 246);
+  color: black; /* Adjust text color for contrast if needed */
+}
+.dimgray {
+  background-color: rgb(97, 111, 110);
+  color: white; /* Adjust text color for contrast if needed */
+}
+.gunmetal {
+  background-color: rgb(25, 37, 36);
+  color: white; /* Adjust text color for contrast if needed */
+}
+.night {
+  background-color: rgb(8, 13, 12);
+  color: white; /* Adjust text color for contrast if needed */
+}
+.night-text {
+  color: rgb(8, 13, 12); /* Metin rengi */
+}
+.eerieblack {
+  color: rgb(20, 26, 25); /* Text color */
+}
+.bgeerieblack {
+  background-color: rgb(20, 26, 25);
+  color: white;
+}

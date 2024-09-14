@@ -50,7 +50,7 @@ export function Sidebar_Navigation() {
                 Dashboard
               </Link>
               <Link
-                href="#"
+                href="index.tsx"
                 className="flex items-center gap-3 rounded-md px-3 py-2 text-lg font-medium hover:bg-gray-600"
                 prefetch={false}
               >
@@ -58,7 +58,7 @@ export function Sidebar_Navigation() {
                 Dataset
               </Link>
               <Link
-                href="#"
+                href="datasets.tsx"
                 className="flex items-center gap-3 rounded-md px-3 py-2 text-lg font-medium hover:bg-gray-600"
                 prefetch={false}
               >
@@ -66,7 +66,7 @@ export function Sidebar_Navigation() {
                 Models
               </Link>
               <Link
-                href="#"
+                href="modals.tsx"
                 className="flex items-center gap-3 rounded-md px-3 py-2 text-lg font-medium hover:bg-gray-600"
                 prefetch={false}
               >
