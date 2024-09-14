@@ -10,44 +10,42 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Download,
   ArrowLeft,
-  ChevronDown,
-  ChevronUp,
   ExternalLink,
+  Code,
+  ChevronDown,
+  Download,
 } from "lucide-react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 
+interface Split {
+  name: string;
+  num_examples: number;
+}
+
 interface Dataset {
-  _id: string;
   id: string;
   author: string;
   cardData: {
     pretty_name: string;
-    task_categories: string[];
-    size_categories: string[];
-    license: string[];
-    language: string[];
-    paperswithcode_id: string;
-    dataset_info: {
+    license: string[] | string;
+    language: string[] | string;
+    paperswithcode_id?: string;
+    dataset_info: Array<{
+      config_name: string;
+      splits: Split[];
       dataset_size: number;
       download_size: number;
-      splits: Array<{
-        name: string;
-        num_examples: number;
-      }>;
-    };
+    }>;
+    configs: Array<{
+      config_name: string;
+    }>;
   };
   lastModified: string;
   downloads: number;
   tags: string[];
   description: string;
-}
-
-interface DatasetProfileProps {
-  dataset: Dataset;
-  allDatasets: Dataset[];
 }
 
 const categorizeTag = (tag: string) => {
@@ -68,15 +66,37 @@ const categorizeTag = (tag: string) => {
   return "Other";
 };
 
-const DatasetProfile: React.FC<DatasetProfileProps> = ({
-  dataset,
-  allDatasets,
-}) => {
+const DatasetProfile: React.FC<{
+  dataset: Dataset;
+  allDatasets: Dataset[];
+}> = ({ dataset, allDatasets }) => {
   const router = useRouter();
-  const [selectedSplit, setSelectedSplit] = useState<string>("");
-  const [selectedFormat, setSelectedFormat] = useState<string>("parquet");
-  const [showInfo, setShowInfo] = useState(false);
+  const [selectedConfig, setSelectedConfig] = useState("");
+  const [selectedSplit, setSelectedSplit] = useState("");
+  const [selectedFormat, setSelectedFormat] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [showFullDescription, setShowFullDescription] = useState(false);
+
+  const configs = useMemo(() => dataset.cardData?.configs || [], [dataset]);
+
+  const availableFormats = useMemo(() => {
+    const formats = [];
+    if (dataset.tags.includes("format:parquet")) formats.push("parquet");
+    if (dataset.tags.includes("format:csv")) formats.push("csv");
+    if (dataset.tags.includes("library:mlcroissant")) formats.push("croissant");
+    if (dataset.tags.includes("library:datasets")) formats.push("datasets");
+    if (dataset.tags.includes("library:pandas")) formats.push("pandas");
+    if (dataset.tags.includes("library:polars")) formats.push("polars");
+    return formats;
+  }, [dataset]);
+
+  const splits = useMemo(() => {
+    if (!selectedConfig) return [];
+    const configInfo = dataset.cardData.dataset_info.find(
+      (info) => info.config_name === selectedConfig
+    );
+    return configInfo ? configInfo.splits : [];
+  }, [dataset, selectedConfig]);
 
   const categorizedTags = useMemo(() => {
     const tags: { [key: string]: string[] } = {};
@@ -92,13 +112,49 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
     if (!selectedTag) return [];
     return allDatasets
       .filter((d) => d.id !== dataset.id && d.tags.includes(selectedTag))
-      .slice(0, 5); // Limit to 5 related datasets
+      .slice(0, 5);
   }, [selectedTag, allDatasets, dataset.id]);
+
+  const getCodeSnippet = (format: string) => {
+    switch (format) {
+      case "parquet":
+      case "csv":
+        return `import pandas as pd
+
+splits = {'train': '${selectedConfig}/train-00000-of-00001.${format}'}
+df = pd.read_${format}("hf://datasets/${dataset.id}/" + splits["${selectedSplit}"])`;
+      case "croissant":
+        return `from mlcroissant import Dataset
+
+ds = Dataset(jsonld="https://huggingface.co/api/datasets/${dataset.id}/croissant")
+records = ds.records("${selectedConfig}")`;
+      case "datasets":
+        return `from datasets import load_dataset
+
+ds = load_dataset("${dataset.id}", "${selectedConfig}")`;
+      case "pandas":
+        return `import pandas as pd
+
+splits = {'train': '${selectedConfig}/train-00000-of-00001.parquet'}
+df = pd.read_parquet("hf://datasets/${dataset.id}/" + splits["${selectedSplit}"])`;
+      case "polars":
+        return `import polars as pl
+
+splits = {'train': '${selectedConfig}/train-00000-of-00001.parquet'}
+df = pl.read_parquet('hf://datasets/${dataset.id}/' + splits['${selectedSplit}'])`;
+      default:
+        return "Code snippet not available for this format.";
+    }
+  };
 
   const handleDownload = () => {
     let downloadUrl = "";
-    if (selectedFormat === "parquet" && selectedSplit) {
-      downloadUrl = `https://huggingface.co/api/datasets/${dataset.id}/parquet/default/${selectedSplit}/0.parquet`;
+    if (
+      (selectedFormat === "parquet" || selectedFormat === "csv") &&
+      selectedConfig &&
+      selectedSplit
+    ) {
+      downloadUrl = `https://huggingface.co/datasets/${dataset.id}/resolve/main/${selectedConfig}/${selectedSplit}-00000-of-00001.${selectedFormat}`;
       window.open(downloadUrl, "_blank");
     } else if (selectedFormat === "croissant") {
       downloadUrl = `https://huggingface.co/api/datasets/${dataset.id}/croissant`;
@@ -113,13 +169,14 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
         className="mb-6 border-gray-600 night text-black hover:bg-gray-700"
         onClick={() => router.back()}
       >
-        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Datasets
+        <ArrowLeft className="mr-2 h-4 w-4" /> Back
       </Button>
 
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-black">
           {dataset.cardData.pretty_name}
         </h1>
+        <p className="text-gray-400">by {dataset.author}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -127,36 +184,44 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
           <CardHeader>
             <CardTitle className="text-white">Dataset Information</CardTitle>
           </CardHeader>
-          <CardContent className="text-gray-300">
-            <p>
-              <strong>Author:</strong> {dataset.author}
-            </p>
-            <p>
-              <strong>Last Modified:</strong>{" "}
-              {new Date(dataset.lastModified).toLocaleString()}
-            </p>
-            <p>
-              <strong>Downloads:</strong> {dataset.downloads}
-            </p>
-            <p>
-              <strong>License:</strong> {dataset.cardData.license.join(", ")}
-            </p>
-            <p>
-              <strong>Language:</strong> {dataset.cardData.language.join(", ")}
-            </p>
-            {dataset.cardData.paperswithcode_id && (
-              <p>
-                <strong>Paper:</strong>{" "}
+          <CardContent className="text-gray-300 space-y-2">
+            <InfoItem
+              label="Last Modified"
+              value={new Date(dataset.lastModified).toLocaleString()}
+            />
+            <InfoItem
+              label="Downloads"
+              value={dataset.downloads.toLocaleString()}
+            />
+            <InfoItem
+              label="License"
+              value={
+                Array.isArray(dataset.cardData?.license)
+                  ? dataset.cardData.license.join(", ")
+                  : dataset.cardData?.license || "N/A"
+              }
+            />
+            <InfoItem
+              label="Language"
+              value={
+                Array.isArray(dataset.cardData?.language)
+                  ? dataset.cardData.language.join(", ")
+                  : dataset.cardData?.language || "N/A"
+              }
+            />
+            {dataset.cardData?.paperswithcode_id && (
+              <div>
+                <strong className="text-gray-400">Paper:</strong>{" "}
                 <a
                   href={`https://paperswithcode.com/dataset/${dataset.cardData.paperswithcode_id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-400 hover:underline"
+                  className="text-blue-400 hover:underline inline-flex items-center"
                 >
-                  View on Papers With Code{" "}
-                  <ExternalLink className="inline h-4 w-4" />
+                  View on Papers With Code
+                  <ExternalLink className="ml-1 h-4 w-4" />
                 </a>
-              </p>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -264,53 +329,83 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
                     <SelectValue placeholder="Select split" />
                   </SelectTrigger>
                   <SelectContent>
-                    {dataset.cardData.dataset_info.splits.map((split) => (
+                    {splits?.map((split: Split) => (
                       <SelectItem key={split.name} value={split.name}>
                         {split.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              )}
-              <Button
-                onClick={handleDownload}
-                disabled={
-                  (selectedFormat === "parquet" && !selectedSplit) ||
-                  !selectedFormat
-                }
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Download className="mr-2 h-4 w-4" /> Download
-              </Button>
-            </div>
-            <Button
-              variant="outline"
-              className="text-gray-300 hover:bg-gray-700"
-              onClick={() => setShowInfo(!showInfo)}
-            >
-              {showInfo ? (
-                <ChevronUp className="mr-2 h-4 w-4" />
-              ) : (
-                <ChevronDown className="mr-2 h-4 w-4" />
-              )}
-              Download Information
-            </Button>
-            {showInfo && (
-              <div className="mt-4 p-4 bg-gray-700 rounded-md text-gray-300">
-                <h4 className="font-semibold mb-2">Download Options:</h4>
-                <p>
-                  <strong>Parquet:</strong> Download individual splits of the
-                  dataset in Parquet format.
-                </p>
-                <p>
-                  <strong>Croissant:</strong> Download the entire dataset in
-                  Croissant format, which includes metadata and all splits.
-                </p>
-              </div>
+              </>
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+          {selectedFormat && (
+            <div className="mt-4 p-4 bg-gray-700 rounded-md text-gray-300">
+              <h4 className="font-semibold mb-2">Code Snippet:</h4>
+              <pre className="bg-gray-800 p-2 rounded-md overflow-x-auto">
+                <code>{getCodeSnippet(selectedFormat)}</code>
+              </pre>
+              <div className="flex space-x-2 mt-2">
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      getCodeSnippet(selectedFormat)
+                    );
+                  }}
+                >
+                  <Code className="mr-2 h-4 w-4" /> Copy Code
+                </Button>
+                {(selectedFormat === "parquet" ||
+                  selectedFormat === "csv" ||
+                  selectedFormat === "croissant") && (
+                  <Button
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    onClick={handleDownload}
+                    disabled={
+                      !selectedFormat ||
+                      (selectedFormat !== "croissant" &&
+                        (!selectedConfig || !selectedSplit))
+                    }
+                  >
+                    <Download className="mr-2 h-4 w-4" /> Download
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gray-800 border-gray-700 mb-6">
+        <CardHeader>
+          <CardTitle className="text-white">Tags</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {Object.entries(categorizedTags)?.map(([category, tags]) => (
+            <div key={category} className="mb-4 last:mb-0">
+              <h3 className="text-sm font-medium text-gray-400 mb-2">
+                {category}:
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {tags?.map((tag: string) => (
+                  <Badge
+                    key={tag}
+                    variant={selectedTag === tag ? "default" : "secondary"}
+                    className="cursor-pointer"
+                    onClick={() =>
+                      setSelectedTag(selectedTag === tag ? null : tag)
+                    }
+                  >
+                    {tag.split(":")[1]}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
       {selectedTag && relatedDatasets.length > 0 && (
         <Card className="bg-gray-800 border-gray-700 mb-6">
           <CardHeader>
@@ -318,13 +413,13 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
           </CardHeader>
           <CardContent>
             <ul className="list-disc pl-5 text-gray-300">
-              {relatedDatasets.map((relatedDataset) => (
-                <li key={relatedDataset.id} className="mb-2">
+              {relatedDatasets?.map((relatedDataset) => (
+                <li key={relatedDataset.id} className="mb-2 last:mb-0">
                   <Link
                     href={`/dataset/${relatedDataset.id}`}
                     className="text-blue-400 hover:underline"
                   >
-                    {relatedDataset.cardData.pretty_name}
+                    {relatedDataset.cardData?.pretty_name}
                   </Link>
                 </li>
               ))}
@@ -335,5 +430,14 @@ const DatasetProfile: React.FC<DatasetProfileProps> = ({
     </div>
   );
 };
+
+const InfoItem: React.FC<{ label: string; value: string | number }> = ({
+  label,
+  value,
+}) => (
+  <div>
+    <strong className="text-gray-400">{label}:</strong> {value}
+  </div>
+);
 
 export default DatasetProfile;
