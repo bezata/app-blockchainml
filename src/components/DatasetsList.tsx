@@ -279,7 +279,7 @@ export default function BlockchainMLDatasetBrowser({
                   Filter Tags
                 </Button>
               </SheetTrigger>
-              <SheetContent>
+              <SheetContent side="left">
                 <SheetHeader>
                   <SheetTitle>Filter by Tags</SheetTitle>
                   <SheetDescription>
