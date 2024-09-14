@@ -1,264 +1,40 @@
-# BlockchainML API Documentation
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-## Table of Contents
+## Getting Started
 
-1. [Introduction](#introduction)
-2. [Authentication](#authentication)
-3. [API Endpoints](#api-endpoints)
-   - [Datasets](#datasets)
-   - [Users](#users)
-   - [Trending](#trending)
-4. [Error Handling](#error-handling)
-5. [Rate Limiting](#rate-limiting)
-6. [OpenTelemetry Integration](#opentelemetry-integration)
-7. [Security Considerations](#security-considerations)
-8. [Examples](#examples)
+First, run the development server:
 
-## Introduction
-
-The BlockchainML API provides access to blockchain-related datasets and machine learning models. This API is built using Elysia, a performant Node.js web framework, and integrates various features such as authentication, rate limiting, and OpenTelemetry for observability.
-
-Base URL: `https://api.blockchainml.com/v1`
-
-## Authentication
-
-All API requests must be authenticated using an API key. Include the API key in the `Authorization` header of your requests:
-
-```
-Authorization: Bearer YOUR_API_KEY
-```
-
-To obtain an API key, register for an account on the BlockchainML platform.
-
-## API Endpoints
-
-### Datasets
-
-#### List Datasets
-
-```
-GET /api/v1/datasets
-```
-
-Query Parameters:
-- `page` (optional): Page number for pagination (default: 1)
-- `limit` (optional): Number of items per page (default: 10)
-- `sortBy` (optional): Field to sort by ('title', 'createdAt', 'downloads')
-- `sortOrder` (optional): Sort order ('asc' or 'desc')
-- `tag` (optional): Filter by tag
-- `search` (optional): Search term for title or description
-
-Response:
-```json
-{
-  "datasets": [
-    {
-      "id": "dataset_id",
-      "title": "Dataset Title",
-      "description": "Dataset Description",
-      "tags": ["tag1", "tag2"],
-      "downloads": 100,
-      "createdAt": "2023-01-01T00:00:00Z"
-    }
-  ],
-  "meta": {
-    "total": 50,
-    "page": 1,
-    "limit": 10,
-    "totalPages": 5
-  }
-}
-```
-
-#### Get Dataset
-
-```
-GET /api/v1/datasets/:id
-```
-
-Response:
-```json
-{
-  "id": "dataset_id",
-  "title": "Dataset Title",
-  "description": "Dataset Description",
-  "tags": ["tag1", "tag2"],
-  "downloads": 100,
-  "createdAt": "2023-01-01T00:00:00Z",
-  "fileUrl": "https://storage.blockchainml.com/datasets/dataset_id.csv"
-}
-```
-
-#### Create Dataset
-
-```
-POST /api/v1/datasets
-```
-
-Request Body:
-```json
-{
-  "title": "New Dataset",
-  "description": "Description of the new dataset",
-  "tags": ["tag1", "tag2"]
-}
-```
-
-Response:
-```json
-{
-  "id": "new_dataset_id",
-  "title": "New Dataset",
-  "description": "Description of the new dataset",
-  "tags": ["tag1", "tag2"],
-  "downloads": 0,
-  "createdAt": "2023-06-15T00:00:00Z",
-  "uploadUrl": "https://storage.blockchainml.com/upload/new_dataset_id"
-}
-```
-
-#### Download Dataset
-
-```
-GET /api/v1/datasets/:id/download
-```
-
-Response:
-```json
-{
-  "downloadUrl": "https://storage.blockchainml.com/download/dataset_id.csv"
-}
-```
-
-### Users
-
-#### Register User
-
-```
-POST /api/v1/users/register
-```
-
-Request Body:
-```json
-{
-  "email": "user@example.com",
-  "password": "securepassword",
-  "name": "John Doe"
-}
-```
-
-Response:
-```json
-{
-  "id": "user_id",
-  "email": "user@example.com",
-  "name": "John Doe",
-  "apiKey": "your_api_key_here"
-}
-```
-
-### Trending
-
-#### Get Trending Datasets
-
-```
-GET /api/v1/trending/datasets
-```
-
-Query Parameters:
-- `limit` (optional): Number of trending datasets to return (default: 10)
-
-Response:
-```json
-{
-  "datasets": [
-    {
-      "id": "dataset_id",
-      "title": "Trending Dataset",
-      "downloads": 1000,
-      "trendScore": 95.5
-    }
-  ]
-}
-```
-
-## Error Handling
-
-The API uses conventional HTTP response codes to indicate the success or failure of requests. Codes in the 2xx range indicate success, codes in the 4xx range indicate an error that resulted from the provided information (e.g., missing required parameters, invalid values), and codes in the 5xx range indicate an error with our servers.
-
-Error Response Format:
-```json
-{
-  "error": "Error message here"
-}
-```
-
-## Rate Limiting
-
-The API implements rate limiting to prevent abuse. The current limit is 100 requests per minute per IP address. If you exceed this limit, you'll receive a 429 (Too Many Requests) response.
-
-Rate limit headers are included in all responses:
-
-- `X-RateLimit-Limit`: The maximum number of requests you're permitted to make per minute.
-- `X-RateLimit-Remaining`: The number of requests remaining in the current rate limit window.
-- `X-RateLimit-Reset`: The time at which the current rate limit window resets in UTC epoch seconds.
-
-## OpenTelemetry Integration
-
-The API is instrumented with OpenTelemetry for observability. This allows for distributed tracing and performance monitoring. If you're integrating with our API and have OpenTelemetry set up in your system, you can correlate traces between your application and our API.
-
-## Security Considerations
-
-- Always use HTTPS for API requests to ensure data privacy.
-- Keep your API key secure and don't share it publicly.
-- Implement proper input validation and sanitization in your applications when sending data to the API.
-
-## Examples
-
-### Curl
-
-List datasets:
 ```bash
-curl -H "Authorization: Bearer YOUR_API_KEY" https://api.blockchainml.com/v1/api/v1/datasets
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-Create a dataset:
-```bash
-curl -X POST -H "Authorization: Bearer YOUR_API_KEY" -H "Content-Type: application/json" -d '{"title":"New Dataset","description":"A new dataset","tags":["blockchain","finance"]}' https://api.blockchainml.com/v1/api/v1/datasets
-```
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-### Python (using requests library)
+You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
 
-```python
-import requests
+[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
 
-API_KEY = 'YOUR_API_KEY'
-BASE_URL = 'https://api.blockchainml.com/v1'
+The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
 
-headers = {
-    'Authorization': f'Bearer {API_KEY}'
-}
+This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
-# List datasets
-response = requests.get(f'{BASE_URL}/api/v1/datasets', headers=headers)
-datasets = response.json()
+## Learn More
 
-# Get a specific dataset
-dataset_id = 'some_dataset_id'
-response = requests.get(f'{BASE_URL}/api/v1/datasets/{dataset_id}', headers=headers)
-dataset = response.json()
+To learn more about Next.js, take a look at the following resources:
 
-# Create a new dataset
-new_dataset = {
-    'title': 'New Dataset',
-    'description': 'A new dataset',
-    'tags': ['blockchain', 'finance']
-}
-response = requests.post(f'{BASE_URL}/api/v1/datasets', headers=headers, json=new_dataset)
-created_dataset = response.json()
-```
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-This documentation provides a comprehensive overview of your BlockchainML API, including authentication methods, available endpoints, error handling, rate limiting, and usage examples. You should customize this documentation based on the specific features and requirements of your API. Remember to keep it updated as you add new features or make changes to existing endpoints. 
----
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
 
-Made with ❤️ by the BlockchainML team
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.

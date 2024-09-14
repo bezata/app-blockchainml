@@ -15,12 +15,6 @@ import {
   Filter,
   X,
   Star,
-  LayoutDashboard,
-  Database,
-  Box,
-  BookMarked,
-  Settings,
-  LogOut,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -77,7 +71,6 @@ export default function BlockchainMLDatasetBrowser({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [tagSearchTerm, setTagSearchTerm] = useState("");
 
   const categorizedTags = useMemo(() => {
     const tags: { [key: string]: Set<string> } = {};
@@ -127,17 +120,6 @@ export default function BlockchainMLDatasetBrowser({
     setCurrentPage(1);
   };
 
-  const filteredTags = useMemo(() => {
-    return categorizedTags.map((category) => ({
-      ...category,
-      tags: category.tags.filter((tag) =>
-        getTagDisplayText(tag)
-          .toLowerCase()
-          .includes(tagSearchTerm.toLowerCase())
-      ),
-    }));
-  }, [categorizedTags, tagSearchTerm]);
-
   const TagsContent = () => {
     const [tagSearchTerm, setTagSearchTerm] = useState("");
     const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
@@ -168,7 +150,7 @@ export default function BlockchainMLDatasetBrowser({
             .includes(tagSearchTerm.toLowerCase())
         ),
       }));
-    }, [categorizedTags, tagSearchTerm]);
+    }, [tagSearchTerm]);
 
     return (
       <div className="flex flex-col space-y-4">
@@ -210,7 +192,9 @@ export default function BlockchainMLDatasetBrowser({
           {filteredTags.map(({ category, tags }) => (
             <div
               key={category}
-              ref={(el) => (categoryRefs.current[category] = el)}
+              ref={(el) => {
+                if (el) categoryRefs.current[category] = el;
+              }}
               className="mb-4"
             >
               <h3 className="text-sm font-medium text-gray-400 mb-2">
