@@ -1,64 +1,52 @@
-"use client";
+import React, { useState, useCallback, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { AlertTriangle, Loader2, Upload, X, Tag } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Label } from "@/components/ui/label"
+import { Progress } from "@/components/ui/progress"
+import { useDropzone } from "react-dropzone"
+import { motion, AnimatePresence } from "framer-motion"
+import { NavBar } from "./component/nav-bar"
 
-import React, { useState, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { AlertTriangle, Loader2, Upload, X, Tag } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { useDropzone } from "react-dropzone";
-import { motion, AnimatePresence } from "framer-motion";
-import { NavBar } from "@/components/component/nav-bar";
+const API_BASE_URL = "http://localhost:4000/api/v1"
 
-const API_BASE_URL = "http://localhost:4000/api/v1";
+const tagSuggestions = ["Machine Learning", "Blockchain", "Data Science", "AI", "Big Data", "Analytics"]
 
-const tagSuggestions = [
-  "Machine Learning",
-  "Blockchain",
-  "Data Science",
-  "AI",
-  "Big Data",
-  "Analytics",
-];
-
-export default function CreateDataset() {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [file, setFile] = useState<File | null>(null);
-  const [isPublic, setIsPublic] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const router = useRouter();
+export function CreateDatasetComponent() {
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [tags, setTags] = useState<string[]>([])
+  const [file, setFile] = useState<File | null>(null)
+  const [isPublic, setIsPublic] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const router = useRouter()
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    setFile(acceptedFiles[0]);
-  }, []);
+    setFile(acceptedFiles[0])
+  }, [])
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    maxFiles: 1,
-  });
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, maxFiles: 1 })
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
-    setUploadProgress(0);
+    e.preventDefault()
+    setError(null)
+    setIsLoading(true)
+    setUploadProgress(0)
 
     if (!title || !file || tags.length === 0) {
-      setError("Please provide a title, at least one tag, and upload a file.");
-      setIsLoading(false);
-      return;
+      setError("Please provide a title, at least one tag, and upload a file.")
+      setIsLoading(false)
+      return
     }
 
     try {
-      const fileData = await readFileAsBase64(file);
+      const fileData = await readFileAsBase64(file)
 
       const payload = {
         title,
@@ -71,7 +59,7 @@ export default function CreateDataset() {
           type: file.type,
           data: fileData,
         },
-      };
+      }
 
       const response = await fetch(`${API_BASE_URL}/datasets`, {
         method: "POST",
@@ -79,77 +67,70 @@ export default function CreateDataset() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
-      });
+      })
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(JSON.stringify(errorData));
+        const errorData = await response.json()
+        throw new Error(JSON.stringify(errorData))
       }
 
-      const result = await response.json();
-      console.log("Dataset created successfully:", result);
-      router.push(`/datasets/${result.dataset.id}`);
+      const result = await response.json()
+      console.log("Dataset created successfully:", result)
+      router.push(`/datasets/${result.dataset.id}`)
     } catch (err) {
-      console.error("Error details:", err);
-      setError(
-        err instanceof Error ? err.message : "An unexpected error occurred"
-      );
+      console.error("Error details:", err)
+      setError(err instanceof Error ? err.message : "An unexpected error occurred")
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const readFileAsBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
+      const reader = new FileReader()
       reader.onload = () => {
         if (typeof reader.result === "string") {
-          resolve(reader.result.split(",")[1]);
+          resolve(reader.result.split(",")[1])
         } else {
-          reject(new Error("Failed to read file as base64"));
+          reject(new Error("Failed to read file as base64"))
         }
-      };
-      reader.onerror = (error) => reject(error);
-      reader.readAsDataURL(file);
-    });
-  };
+      }
+      reader.onerror = (error) => reject(error)
+      reader.readAsDataURL(file)
+    })
+  }
 
   useEffect(() => {
     if (isLoading) {
       const interval = setInterval(() => {
         setUploadProgress((prevProgress) => {
-          const newProgress = prevProgress + 10;
-          return newProgress > 90 ? 90 : newProgress;
-        });
-      }, 500);
-      return () => clearInterval(interval);
+          const newProgress = prevProgress + 10
+          return newProgress > 90 ? 90 : newProgress
+        })
+      }, 500)
+      return () => clearInterval(interval)
     }
-  }, [isLoading]);
+  }, [isLoading])
 
   const addTag = (tag: string) => {
     if (!tags.includes(tag)) {
-      setTags([...tags, tag]);
+      setTags([...tags, tag])
     }
-  };
+  }
 
   const removeTag = (tag: string) => {
-    setTags(tags.filter((t) => t !== tag));
-  };
+    setTags(tags.filter((t) => t !== tag))
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 font-sans">
       <NavBar />
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white shadow-sm rounded-lg p-8 max-w-2xl mx-auto transition-all duration-300 hover:shadow-md">
-          <h1 className="text-3xl font-light mb-6 text-gray-700">
-            Create New Dataset
-          </h1>
+          <h1 className="text-3xl font-light mb-6 text-gray-700">Create New Dataset</h1>
 
           {error && (
-            <Alert
-              variant="destructive"
-              className="mb-6 bg-red-50 border-red-200 text-red-700"
-            >
+            <Alert variant="destructive" className="mb-6 bg-red-50 border-red-200 text-red-700">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
@@ -222,11 +203,11 @@ export default function CreateDataset() {
                 placeholder="Add custom tags (press Enter)"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    e.preventDefault();
-                    const input = e.target as HTMLInputElement;
+                    e.preventDefault()
+                    const input = e.target as HTMLInputElement
                     if (input.value.trim()) {
-                      addTag(input.value.trim());
-                      input.value = "";
+                      addTag(input.value.trim())
+                      input.value = ""
                     }
                   }
                 }}
@@ -241,9 +222,7 @@ export default function CreateDataset() {
               <div
                 {...getRootProps()}
                 className={`border-2 border-dashed rounded-md p-4 text-center cursor-pointer transition-colors duration-300 ${
-                  isDragActive
-                    ? "border-green-400 bg-green-50"
-                    : "border-gray-300 hover:border-green-400"
+                  isDragActive ? "border-green-400 bg-green-50" : "border-gray-300 hover:border-green-400"
                 }`}
               >
                 <input {...getInputProps()} />
@@ -305,5 +284,5 @@ export default function CreateDataset() {
         </div>
       </div>
     </div>
-  );
+  )
 }

@@ -19,9 +19,15 @@ export interface Dataset {
         num_examples: number;
       }>;
     };
+    configs: { config_name: string; splits: Split[] }[];
   };
   lastModified: string;
   downloads: number;
   tags: string[];
   description: string;
+}
+
+interface Split {
+  name: string;
+  num_examples: number;
 }

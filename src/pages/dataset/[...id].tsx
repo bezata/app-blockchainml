@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import DatasetProfile from "@/components/DatasetProfile";
-import { Dataset } from "@/types/dataset";
+import DatasetProfile, {
+  Dataset as ComponentDataset,
+} from "@/components/DatasetProfile";
+import { Dataset as ApiDataset } from "@/types/dataset";
 import FuturisticLoadingScreen from "@/components/ui/loadingscreen";
 import ErrorPage from "@/components/ui/errorpage";
 
 export default function DatasetProfilePage() {
-  const [dataset, setDataset] = useState<Dataset | null>(null);
-  const [allDatasets, setAllDatasets] = useState<Dataset[]>([]);
+  const [dataset, setDataset] = useState<ApiDataset | null>(null);
+  const [allDatasets, setAllDatasets] = useState<ApiDataset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -63,5 +65,10 @@ export default function DatasetProfilePage() {
     return <ErrorPage />;
   }
 
-  return <DatasetProfile dataset={dataset} allDatasets={allDatasets} />;
+  return (
+    <DatasetProfile
+      dataset={dataset as unknown as ComponentDataset}
+      allDatasets={allDatasets as unknown as ComponentDataset[]}
+    />
+  );
 }

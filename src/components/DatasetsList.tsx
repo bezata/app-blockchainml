@@ -1,10 +1,11 @@
+"use client";
+
 import React, { useState, useRef, useMemo } from "react";
 import { NavBar } from "./component/nav-bar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Search,
   Plus,
@@ -124,14 +125,12 @@ export default function BlockchainMLDatasetBrowser({
     const [tagSearchTerm, setTagSearchTerm] = useState("");
     const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-    // Calculate the number of selected tags per category
     const getSelectedTagCount = (category: string) => {
       const tagsInCategory =
         filteredTags.find((c) => c.category === category)?.tags || [];
       return tagsInCategory.filter((tag) => selectedTags.includes(tag)).length;
     };
 
-    // Handle scroll to category
     const handleScrollToCategory = (category: string) => {
       if (categoryRefs.current[category]) {
         categoryRefs.current[category]?.scrollIntoView({
@@ -154,7 +153,6 @@ export default function BlockchainMLDatasetBrowser({
 
     return (
       <div className="flex flex-col space-y-4">
-        {/* Buttons for Category List */}
         <div className="flex flex-wrap gap-2">
           {filteredTags.map(({ category }) => {
             const count = getSelectedTagCount(category);
@@ -163,11 +161,11 @@ export default function BlockchainMLDatasetBrowser({
                 key={category}
                 variant="ghost"
                 onClick={() => handleScrollToCategory(category)}
-                className="text-gray-300 hover:text-white relative"
+                className="text-gray-600 hover:text-gray-800 relative transition-colors duration-300"
               >
                 {category}
                 {count > 0 && (
-                  <span className="absolute right-0 text-xs text-white">
+                  <span className="absolute right-0 top-0 text-xs bg-green-100 text-green-800 px-1 rounded-full">
                     {count}
                   </span>
                 )}
@@ -179,14 +177,13 @@ export default function BlockchainMLDatasetBrowser({
           placeholder="Search tags"
           value={tagSearchTerm}
           onChange={(e) => setTagSearchTerm(e.target.value)}
-          className="mb-4"
+          className="mb-4 bg-white border-gray-200 focus:border-green-300 focus:ring-green-200 transition-all duration-300"
         />
-        {/* Input and Scrollable Tags Content */}
         <div
-          className="max-h-[calc(100vh-200px)] overflow-y-auto"
+          className="max-h-[calc(100vh-200px)] overflow-y-auto pr-4"
           style={{
-            scrollbarWidth: "none" /* Firefox */,
-            msOverflowStyle: "none" /* IE and Edge */,
+            scrollbarWidth: "thin",
+            scrollbarColor: "#E2E8F0 #F8FAFC",
           }}
         >
           {filteredTags.map(({ category, tags }) => (
@@ -195,9 +192,9 @@ export default function BlockchainMLDatasetBrowser({
               ref={(el) => {
                 if (el) categoryRefs.current[category] = el;
               }}
-              className="mb-4"
+              className="mb-6"
             >
-              <h3 className="text-sm font-medium text-gray-400 mb-2">
+              <h3 className="text-sm font-medium text-gray-600 mb-2">
                 {category}
               </h3>
               <div className="flex flex-wrap gap-2">
@@ -207,7 +204,7 @@ export default function BlockchainMLDatasetBrowser({
                     variant={
                       selectedTags.includes(tag) ? "default" : "secondary"
                     }
-                    className="cursor-pointer text-xs"
+                    className="cursor-pointer text-xs bg-gray-100 text-gray-800 hover:bg-green-100 hover:text-green-800 transition-colors duration-300"
                     onClick={() => toggleTag(tag)}
                   >
                     {getTagDisplayText(tag)}
@@ -222,46 +219,19 @@ export default function BlockchainMLDatasetBrowser({
   };
 
   return (
-    <div className="flex h-screen bg-gray-300 ">
-      {/* Sidebar */}
-
-      {/* Main Content */}
+    <div className="flex h-screen bg-gradient-to-b from-white to-gray-100 text-gray-800 font-sans">
       <main className="flex-1 overflow-y-auto">
-        <header className="night border-b border-gray-700 p-2 sticky top-0 z-50">
-          <div className="flex items-center justify-between">
-            <NavBar />
-            <div className="relative flex-grow max-w-md">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 bg-gray-300" />
-              <Input
-                className="w-full pl-8 pr-4 py-2 rounded-md border border-gray-600 bg-gray-300 text-black placeholder-black"
-                placeholder="Search datasets and models"
-                type="search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                className="border-gray-600 text-gray-300 hover:bg-gray-700"
-              >
-                Upgrade to Pro
-              </Button>
-              <Avatar>
-                <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
-                <AvatarFallback>JD</AvatarFallback>
-              </Avatar>
-            </div>
-          </div>
+        <header className="bg-white border-b border-gray-200 p-4 sticky top-0 z-50 shadow-sm">
+          <NavBar />
         </header>
 
-        <div className="p-6 space-y-6">
+        <div className="p-8 space-y-8">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold eerieblack  ">
+            <h1 className="text-3xl font-light text-gray-700">
               Blockchain Datasets
             </h1>
             <Button
-              className="bg-gradient-to-r from-orange-600 to-orange-800 hover:from-orange-600 hover:to-orange-400 text-white"
+              className="bg-green-500 hover:bg-green-600 text-white transition-colors duration-300"
               onClick={() => router.push("/create-dataset")}
             >
               <Plus className="mr-2 h-4 w-4" /> Create New Dataset
@@ -269,20 +239,32 @@ export default function BlockchainMLDatasetBrowser({
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-grow max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input
+                className="pl-10 pr-4 py-2 w-full border-gray-200 focus:border-green-300 focus:ring-green-200 rounded-md transition-all duration-300"
+                placeholder="Search datasets"
+                type="search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
             <Sheet>
               <SheetTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-full sm:w-auto night border-gray-600 hover:bg-gray-700"
+                  className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-300"
                 >
-                  <Filter className="mr-2 h-4 w-4 " />
+                  <Filter className="mr-2 h-4 w-4" />
                   Filter Tags
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left">
+              <SheetContent side="right" className="bg-white text-gray-800">
                 <SheetHeader>
-                  <SheetTitle>Filter by Tags</SheetTitle>
-                  <SheetDescription>
+                  <SheetTitle className="text-gray-700">
+                    Filter by Tags
+                  </SheetTitle>
+                  <SheetDescription className="text-gray-500">
                     Select tags to filter the datasets
                   </SheetDescription>
                 </SheetHeader>
@@ -297,7 +279,7 @@ export default function BlockchainMLDatasetBrowser({
                 <Badge
                   key={tag}
                   variant="default"
-                  className="cursor-pointer text-xs bg-blue-600 hover:bg-blue-700 transition-colors"
+                  className="cursor-pointer text-xs bg-green-100 text-green-800 hover:bg-green-200 transition-colors duration-300"
                   onClick={() => toggleTag(tag)}
                 >
                   {getTagDisplayText(tag)}
@@ -311,17 +293,17 @@ export default function BlockchainMLDatasetBrowser({
             {currentDatasets.map((dataset) => (
               <Card
                 key={dataset._id}
-                className="night border-gray-700 overflow-hidden group hover:shadow-lg hover:shadow-black transition-all duration-300"
+                className="bg-white border-gray-200 overflow-hidden group hover:shadow-md transition-all duration-300"
               >
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-semibold text-white ">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-lg font-medium text-gray-700">
                       {dataset.cardData?.pretty_name || "Unnamed Dataset"}
                     </h3>
                     {dataset.isPremium && (
                       <Badge
                         variant="default"
-                        className="bg-gradient-to-r from-yellow-400 to-yellow-600"
+                        className="bg-yellow-100 text-yellow-800"
                       >
                         <Star className="h-3 w-3 mr-1" />
                         Premium
@@ -329,30 +311,33 @@ export default function BlockchainMLDatasetBrowser({
                     )}
                   </div>
 
-                  <div className="flex ">
-                    <p className="text-m text-gray-400">Size:</p>
-                    <p className="text-sm text-white ">
-                      {dataset.cardData?.size_categories?.[0] || "Unknown"}
-                    </p>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Size:</span>
+                      <span className="text-gray-700">
+                        {dataset.cardData?.size_categories?.[0] || "Unknown"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Downloads:</span>
+                      <span className="text-gray-700">
+                        {dataset.downloads ?? "N/A"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Last Updated:</span>
+                      <span className="text-gray-700">
+                        {new Date(dataset.lastModified).toLocaleDateString()}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex ">
-                    <p className="text-m text-gray-400">Downloads:</p>
-                    <p className="text-sm text-white">
-                      {dataset.downloads ?? "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-m text-gray-400"> Last Updated:</p>
-                    <p className="text-sm text-white">
-                      {new Date(dataset.lastModified).toLocaleDateString()}
-                    </p>
-                  </div>
+
                   <div className="flex flex-wrap gap-2 mb-4">
                     {dataset.tags.slice(0, 3).map((tag) => (
                       <Badge
                         key={tag}
                         variant="secondary"
-                        className="text-xs bg-gray-700 text-gray-300"
+                        className="text-xs bg-gray-100 text-gray-600"
                       >
                         {getTagDisplayText(tag)}
                       </Badge>
@@ -360,24 +345,25 @@ export default function BlockchainMLDatasetBrowser({
                     {dataset.tags.length > 3 && (
                       <Badge
                         variant="secondary"
-                        className="text-xs bg-gray-700 text-gray-300"
+                        className="text-xs bg-gray-100 text-gray-600"
                       >
                         +{dataset.tags.length - 3} more
                       </Badge>
                     )}
                   </div>
+
                   <div className="flex justify-between">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="   bg-green-700 text-white hover:text-green-300 hover:bg-green-900 transition-colors"
+                      className="bg-white text-green-600 border-green-200 hover:bg-green-50 hover:border-green-300 transition-colors duration-300"
                     >
                       <Download className="h-4 w-4 mr-2" /> Download
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="bg-blue-700 text-white hover:text-blue-300 hover:bg-blue-900 transition-colors"
+                      className="bg-white text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-colors duration-300"
                       onClick={() => router.push(`/dataset/${dataset.id}`)}
                     >
                       <Eye className="h-4 w-4 mr-2" /> View
@@ -389,7 +375,7 @@ export default function BlockchainMLDatasetBrowser({
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-gray-500">
               Showing {startIndex + 1} to{" "}
               {Math.min(endIndex, filteredDatasets.length)} of{" "}
               {filteredDatasets.length} datasets
@@ -400,7 +386,7 @@ export default function BlockchainMLDatasetBrowser({
                 size="sm"
                 onClick={goToPreviousPage}
                 disabled={currentPage === 1}
-                className="text-gray-300 border-gray-600 hover:bg-gray-700 transition-colors"
+                className="text-gray-600 border-gray-200 hover: bg-gray-50 transition-colors duration-300"
               >
                 <ChevronLeft className="h-4 w-4 mr-2" />
                 Previous
@@ -410,7 +396,7 @@ export default function BlockchainMLDatasetBrowser({
                 size="sm"
                 onClick={goToNextPage}
                 disabled={currentPage === totalPages}
-                className="text-gray-300 border-gray-600 hover:bg-gray-700 transition-colors"
+                className="text-gray-600 border-gray-200 hover:bg-gray-50 transition-colors duration-300"
               >
                 Next
                 <ChevronRight className="h-4 w-4 ml-2" />

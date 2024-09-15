@@ -1,189 +1,116 @@
 "use client";
 
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Download, ChevronRight } from "lucide-react";
 import { NavBar } from "./component/nav-bar";
-import {
-  Search,
-  LayoutDashboard,
-  Database,
-  Box,
-  BookMarked,
-  Settings,
-  LogOut,
-  ChevronRight,
-  Download,
-  Star,
-} from "lucide-react";
-import { useRouter } from "next/router";
 
-export function BlockchainMlApp() {
-  const router = useRouter();
+export default function BlockchainMlApp() {
   return (
-    <div className="flex h-screen bg-gray-300">
-      {/* Sidebar */}
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 text-gray-800 font-sans">
+      {/* Header */}
+      <header className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
+        <NavBar />
+      </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        {/* Header */}
-        <header className="night border-b border-gray-700 p-4">
-          <div className="flex items-center justify-between">
-            <NavBar />
-            <div className="relative flex-grow max-w-md">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-              <Input
-                className="w-full pl-8 pr-4 py-2 rounded-md border border-gray-600 bg-gray-300 text-black placeholder-gray-500"
-                placeholder="Search datasets and models"
-                type="search"
-              />
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                className="border-gray-600 text-gray-300 hover:bg-gray-700"
-              >
-                Upgrade to Pro
-              </Button>
-              <Avatar>
-                <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
-                <AvatarFallback>JD</AvatarFallback>
-              </Avatar>
-            </div>
-          </div>
-        </header>
+      <main className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-light text-gray-700 mb-8">Dashboard</h1>
 
-        {/* Dashboard Content */}
-        <div className="p-6">
-          <h1 className="text-2xl font-bold mb-6 text-black">Dashboard</h1>
-
-          {/* Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <Card className="night border-gray-700">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-300">
-                  Total Downloads
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          {[
+            { title: "Curated Datasets", value: "124" },
+            { title: "Total Downloads", value: "8,721" },
+            { title: "Active Users", value: "3,891" },
+          ].map((stat, index) => (
+            <Card
+              key={index}
+              className="bg-white shadow-sm hover:shadow-md transition-all duration-300"
+            >
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-normal text-gray-500 uppercase tracking-wide">
+                  {stat.title}
                 </CardTitle>
-                <Database className="h-4 w-4 text-gray-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-white">1,234</div>
-                <p className="text-xs text-gray-400">+20.1% from last month</p>
+                <p className="text-3xl font-light text-green-600">
+                  {stat.value}
+                </p>
               </CardContent>
             </Card>
-            <Card className="night border-gray-700">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-300">
-                  Active Models
-                </CardTitle>
-                <Box className="h-4 w-4 text-gray-400" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">23</div>
-                <p className="text-xs text-gray-400">+2 new this week</p>
-              </CardContent>
-            </Card>
-            <Card className="night border-gray-700">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-300">
-                  Saved Items
-                </CardTitle>
-                <BookMarked className="h-4 w-4 text-gray-400" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">15</div>
-                <p className="text-xs text-gray-400">5 datasets, 10 models</p>
-              </CardContent>
-            </Card>
-          </div>
+          ))}
+        </div>
 
-          {/* Recent Items */}
-          <h2 className="text-xl font-semibold mb-4 text-black">
-            Recent Items
-          </h2>
-          <div className=" grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-              {
-                type: "Dataset",
-                name: "Ethereum Transactions 2023",
-                downloads: "5.2k",
-                badge: "Free",
-              },
-              {
-                type: "Model",
-                name: "CryptoPredict v2",
-                rating: "4.8",
-                badge: "Premium",
-              },
-              {
-                type: "Dataset",
-                name: "DeFi Protocols Analysis",
-                downloads: "3.7k",
-                badge: "Free",
-              },
-              {
-                type: "Model",
-                name: "Blockchain Anomaly Detector",
-                rating: "4.6",
-                badge: "Premium",
-              },
-            ].map((item, index) => (
-              <Card key={index} className="night border-gray-700">
-                <CardHeader className="flex flex-row items-start justify-between space-y-0">
-                  <div>
-                    <Badge
-                      variant="secondary"
-                      className="bg-gray-700 text-gray-300"
-                    >
-                      {item.type}
-                    </Badge>
-                    <CardTitle className="text-lg mt-2 text-white">
-                      {item.name}
-                    </CardTitle>
-                  </div>
+        <h2 className="text-2xl font-light mb-6 text-gray-700">
+          Featured Datasets
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[
+            {
+              name: "Global Sustainability Metrics",
+              downloads: "5.2k",
+              type: "Environment",
+              size: "2.3 GB",
+            },
+            {
+              name: "Mindfulness in the Workplace",
+              downloads: "3.7k",
+              type: "Wellness",
+              size: "1.5 GB",
+            },
+            {
+              name: "Renewable Energy Trends",
+              downloads: "2.9k",
+              type: "Energy",
+              size: "800 MB",
+            },
+            {
+              name: "Urban Green Spaces Analysis",
+              downloads: "1.8k",
+              type: "Urban Planning",
+              size: "500 MB",
+            },
+          ].map((dataset, index) => (
+            <Card
+              key={index}
+              className="bg-white shadow-sm hover:shadow-md transition-all duration-300"
+            >
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
                   <Badge
-                    variant={item.badge === "Premium" ? "default" : "secondary"}
-                    className={
-                      item.badge === "Premium"
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-700 text-gray-300"
-                    }
+                    variant="secondary"
+                    className="rounded-full px-3 py-1 text-xs font-medium bg-green-100 text-green-800"
                   >
-                    {item.badge}
+                    {dataset.type}
                   </Badge>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center">
-                    {item.downloads ? (
-                      <div className="flex items-center">
-                        <Download className="mr-2 h-4 w-4 text-gray-400" />
-                        <span className="text-sm text-gray-400">
-                          {item.downloads} Downloads
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center">
-                        <Star className="mr-2 h-4 w-4 text-yellow-400" />
-                        <span className="text-sm text-gray-400">
-                          {item.rating} Rating
-                        </span>
-                      </div>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-gray-300 hover:text-white hover:bg-gray-700"
-                    >
-                      View <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-400 hover:text-green-600 transition-colors duration-300"
+                  >
+                    <Download className="w-5 h-5" />
+                  </Button>
+                </div>
+                <CardTitle className="text-xl font-light mt-2 text-gray-700">
+                  {dataset.name}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between items-center text-sm text-gray-500 mb-4">
+                  <span>{dataset.downloads} downloads</span>
+                  <span>{dataset.size}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full rounded-full border-gray-200 text-green-600 hover:bg-green-50 hover:text-green-700 transition-colors duration-300"
+                >
+                  Explore
+                  <ChevronRight className="ml-2 w-4 h-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </main>
     </div>
