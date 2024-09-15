@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { DatabaseIcon } from "lucide-react";
 import {
   Search,
   Plus,
@@ -227,8 +228,8 @@ export default function BlockchainMLDatasetBrowser({
 
         <div className="p-8 space-y-8">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-light text-gray-700">
-              Blockchain Datasets
+            <h1 className="text-3xl font-light flex items-center text-gray-700">
+              <DatabaseIcon className="mr-2 mt-1" /> Datasets
             </h1>
             <Button
               className="bg-green-500 hover:bg-green-600 text-white transition-colors duration-300"

@@ -1,28 +1,67 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { Menu, X } from "lucide-react";
 
 export function NavBar() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
-    <div className="flex h-full items-center justify-between px-8 py-4 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-800 shadow-sm">
-      <nav className="flex items-center space-x-8">
-        <Image src="/angry.png" alt="Logo" width={48} height={48} />
-        <div className="flex items-center space-x-6">
-          <NavLink href="/" icon={<LayoutDashboardIcon />} text="Dashboard" />
-          <NavLink href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
-          <NavLink href="#" icon={<ViewIcon />} text="Models" />
-          <NavLink href="#" icon={<SaveIcon />} text="Saved Items" />
-          <NavLink href="#" icon={<SettingsIcon />} text="Settings" />
+    <div className="relative bg-white text-gray-800 shadow-sm">
+      <div className="flex items-center justify-between px-8 py-4">
+        <nav className="flex items-center space-x-8">
+          <Image src="/angry.png" alt="Logo" width={48} height={48} />
+          <div className="hidden md:flex items-center space-x-6">
+            <NavLink href="/" icon={<LayoutDashboardIcon />} text="Dashboard" />
+            <NavLink href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
+            <NavLink href="#" icon={<ViewIcon />} text="Models" />
+            <NavLink href="#" icon={<SaveIcon />} text="Saved Items" />
+            <NavLink href="#" icon={<SettingsIcon />} text="Settings" />
+          </div>
+        </nav>
+        <div className="hidden md:flex items-center space-x-4">
+          <Button
+            variant="outline"
+            className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200 rounded-full px-6 transition-all duration-300"
+          >
+            Sign In
+          </Button>
         </div>
-      </nav>
-      <div className="flex items-center space-x-4">
-        <Button
-          variant="outline"
-          className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200 rounded-full px-6 transition-all duration-300"
-        >
-          Sign In
-        </Button>
+        <div className="md:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {isMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </Button>
+        </div>
       </div>
+      {isMenuOpen && (
+        <div className="absolute top-full left-0 right-0 bg-white shadow-md md:hidden z-50">
+          <nav className="flex flex-col items-start p-4 space-y-4">
+            <NavLink href="/" icon={<LayoutDashboardIcon />} text="Dashboard" />
+            <NavLink href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
+            <NavLink href="#" icon={<ViewIcon />} text="Models" />
+            <NavLink href="#" icon={<SaveIcon />} text="Saved Items" />
+            <NavLink href="#" icon={<SettingsIcon />} text="Settings" />
+            <Button
+              variant="outline"
+              className="w-full bg-green-50 text-green-700 hover:bg-green-100 border-green-200 rounded-full px-6 transition-all duration-300"
+            >
+              Sign In
+            </Button>
+          </nav>
+        </div>
+      )}
     </div>
   );
 }
