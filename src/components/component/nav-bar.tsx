@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
+import { SubscriptionPopupComponent } from "../subscription-popup";
 
 export function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,11 +18,14 @@ export function NavBar() {
           <div className="hidden md:flex items-center space-x-6">
             <NavLink href="/" icon={<LayoutDashboardIcon />} text="Dashboard" />
             <NavLink href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
-            <NavLink href="#" icon={<ViewIcon />} text="Models" />
+            <NavLink href="/saveditemspage" icon={<ViewIcon />} text="Models" />
             <NavLink href="#" icon={<SaveIcon />} text="Saved Items" />
             <NavLink href="#" icon={<SettingsIcon />} text="Settings" />
           </div>
         </nav>
+        <div>
+          <SubscriptionPopupComponent />
+        </div>
         <div className="hidden md:flex items-center space-x-4">
           <Button
             variant="outline"
