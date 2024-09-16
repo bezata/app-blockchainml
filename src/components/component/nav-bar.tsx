@@ -71,8 +71,12 @@ export function NavBar() {
           <nav className="flex flex-col items-start p-4 space-y-4">
             <NavLink href="/" icon={<LayoutDashboardIcon />} text="Dashboard" />
             <NavLink href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
-            <NavLink href="#" icon={<ViewIcon />} text="Models" />
-            <NavLink href="#" icon={<SaveIcon />} text="Saved Items" />
+            <NavLink href="/models" icon={<ViewIcon />} text="Models" />
+            <NavLink
+              href="/savedItems"
+              icon={<SaveIcon />}
+              text="Saved Items"
+            />
             <NavLink href="/monetization" icon={<MoneyIcon />} text="Earn" />
             <Button
               variant="outline"
