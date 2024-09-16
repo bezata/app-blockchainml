@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
-import { SubscriptionPopupComponent } from "../subscription-popup";
 
 export function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -18,14 +17,16 @@ export function NavBar() {
           <div className="hidden md:flex items-center space-x-6">
             <NavLink href="/" icon={<LayoutDashboardIcon />} text="Dashboard" />
             <NavLink href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
-            <NavLink href="/saveditemspage" icon={<ViewIcon />} text="Models" />
-            <NavLink href="#" icon={<SaveIcon />} text="Saved Items" />
+            <NavLink href="/models" icon={<ViewIcon />} text="Models" />
+            <NavLink
+              href="/savedItems "
+              icon={<SaveIcon />}
+              text="Saved Items"
+            />
             <NavLink href="#" icon={<SettingsIcon />} text="Settings" />
           </div>
         </nav>
-        <div>
-          <SubscriptionPopupComponent />
-        </div>
+        <div></div>
         <div className="hidden md:flex items-center space-x-4">
           <Button
             variant="outline"
@@ -79,15 +80,43 @@ function NavLink({
   icon: React.ReactNode;
   text: string;
 }) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const isActive = router.pathname === href;
+
+  useEffect(() => {
+    const handleStart = (url: string) =>
+      url !== router.asPath && setIsLoading(true);
+    const handleComplete = () => setIsLoading(false);
+
+    router.events.on("routeChangeStart", handleStart);
+    router.events.on("routeChangeComplete", handleComplete);
+    router.events.on("routeChangeError", handleComplete);
+
+    return () => {
+      router.events.off("routeChangeStart", handleStart);
+      router.events.off("routeChangeComplete", handleComplete);
+      router.events.off("routeChangeError", handleComplete);
+    };
+  }, [router]);
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    router.push(href);
+  };
+
   return (
-    <Link
+    <a
       href={href}
-      className="flex items-center gap-2 text-gray-600 hover:text-green-700 transition-colors duration-300"
-      prefetch={false}
+      onClick={handleClick}
+      className={`flex items-center gap-2 transition-colors duration-300 ${
+        isActive ? "text-green-700" : "text-gray-600 hover:text-green-700"
+      } ${isLoading ? "opacity-50 cursor-wait" : ""}`}
     >
       {icon}
       <span className="text-sm font-medium">{text}</span>
-    </Link>
+    </a>
   );
 }
 

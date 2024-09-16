@@ -5,20 +5,22 @@ import { NavBar } from "./component/nav-bar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { DatabaseIcon } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  DatabaseIcon,
   Search,
-  Plus,
   Download,
-  Eye,
   ChevronLeft,
   ChevronRight,
   Filter,
   X,
-  Star,
+  Users,
+  BarChart2,
+  Tag,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import DatasetCardComponent from "./dataset-card";
+
 import {
   Sheet,
   SheetContent,
@@ -27,6 +29,17 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 
 interface Dataset {
   _id: string;
@@ -40,6 +53,7 @@ interface Dataset {
   downloads: number;
   tags: string[];
   isPremium: boolean;
+  provider: "HuggingFace" | "BlockchainML";
 }
 
 const ITEMS_PER_PAGE = 20;
@@ -64,15 +78,25 @@ const getTagDisplayText = (tag: string) => {
   return parts.length > 1 ? parts[1] : tag;
 };
 
+const trendingData = [
+  { name: "Jan", downloads: 4000, monetization: 2400 },
+  { name: "Feb", downloads: 3000, monetization: 1398 },
+  { name: "Mar", downloads: 5000, monetization: 3800 },
+  { name: "Apr", downloads: 4500, monetization: 3908 },
+  { name: "May", downloads: 6000, monetization: 4800 },
+  { name: "Jun", downloads: 5500, monetization: 3800 },
+];
+
 export default function BlockchainMLDatasetBrowser({
   datasets,
 }: {
   datasets: Dataset[];
 }) {
-  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState("all");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const categorizedTags = useMemo(() => {
     const tags: { [key: string]: Set<string> } = {};
@@ -100,9 +124,10 @@ export default function BlockchainMLDatasetBrowser({
             .includes(searchTerm.toLowerCase()) ??
             false) &&
           (selectedTags.length === 0 ||
-            selectedTags.every((tag) => dataset.tags.includes(tag)))
+            selectedTags.every((tag) => dataset.tags.includes(tag))) &&
+          (activeTab === "all" || dataset.provider === activeTab)
       ),
-    [datasets, searchTerm, selectedTags]
+    [datasets, searchTerm, selectedTags, activeTab]
   );
 
   const totalPages = Math.ceil(filteredDatasets.length / ITEMS_PER_PAGE);
@@ -220,37 +245,115 @@ export default function BlockchainMLDatasetBrowser({
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-b from-white to-gray-100 text-gray-800 font-sans">
-      <main className="flex-1 overflow-y-auto">
-        <header className="bg-white border-b border-gray-200 p-4 sticky top-0 z-50 shadow-sm">
-          <NavBar />
-        </header>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 text-gray-800 font-sans">
+      <header className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
+        <NavBar />
+      </header>
 
-        <div className="p-8 space-y-8">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-light flex items-center text-gray-700">
-              <DatabaseIcon className="mr-2 mt-1" /> Datasets
-            </h1>
-            <Button
-              className="bg-green-500 hover:bg-green-600 text-white transition-colors duration-300"
-              onClick={() => router.push("/create-dataset")}
+      <main className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-light mb-8">Dataset Dashboard</h1>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          {[
+            {
+              title: "Total Datasets",
+              value: datasets.length.toString(),
+              icon: DatabaseIcon,
+            },
+            {
+              title: "Total Downloads",
+              value: datasets
+                .reduce((sum, dataset) => sum + dataset.downloads, 0)
+                .toString(),
+              icon: Download,
+            },
+            { title: "Active Users", value: "8,901", icon: Users },
+          ].map((stat, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
             >
-              <Plus className="mr-2 h-4 w-4" /> Create New Dataset
-            </Button>
+              <Card className="bg-white hover:shadow-md transition-all duration-300">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-normal uppercase tracking-wide flex items-center text-gray-500">
+                    <stat.icon className="w-5 h-5 mr-2 text-green-500" />
+                    {stat.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-light text-green-600">
+                    {stat.value}
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+
+        <Card className="bg-white mb-8">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-2xl font-light">
+              Trending Datasets
+            </CardTitle>
+            <BarChart2 className="w-6 h-6 text-gray-400" />
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={trendingData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis yAxisId="left" />
+                <YAxis yAxisId="right" orientation="right" />
+                <Tooltip />
+                <Legend />
+                <Line
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="downloads"
+                  stroke="#10B981"
+                  strokeWidth={2}
+                  name="Downloads"
+                />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="monetization"
+                  stroke="#3B82F6"
+                  strokeWidth={2}
+                  name="Monetization"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <h2 className="text-2xl font-light mb-6">All Datasets</h2>
+
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0 md:space-x-4">
+          <div className="w-full md:w-auto">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList>
+                <TabsTrigger value="all">All Datasets</TabsTrigger>
+                <TabsTrigger value="BlockchainML">BlockchainML</TabsTrigger>
+                <TabsTrigger value="HuggingFace">HuggingFace</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-grow max-w-md">
+          <div className="flex flex-col sm:flex-row w-full md:w-auto space-y-2 sm:space-y-0 sm:space-x-2">
+            <div className="relative flex-grow">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <Input
+                type="text"
+                placeholder="Search datasets..."
                 className="pl-10 pr-4 py-2 w-full border-gray-200 focus:border-green-300 focus:ring-green-200 rounded-md transition-all duration-300"
-                placeholder="Search datasets"
-                type="search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Sheet>
+            <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
               <SheetTrigger asChild>
                 <Button
                   variant="outline"
@@ -260,7 +363,7 @@ export default function BlockchainMLDatasetBrowser({
                   Filter Tags
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="bg-white text-gray-800">
+              <SheetContent className="bg-white text-gray-800">
                 <SheetHeader>
                   <SheetTitle className="text-gray-700">
                     Filter by Tags
@@ -273,139 +376,72 @@ export default function BlockchainMLDatasetBrowser({
               </SheetContent>
             </Sheet>
           </div>
+        </div>
 
-          {selectedTags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {selectedTags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="default"
-                  className="cursor-pointer text-xs bg-green-100 text-green-800 hover:bg-green-200 transition-colors duration-300"
-                  onClick={() => toggleTag(tag)}
-                >
-                  {getTagDisplayText(tag)}
-                  <X className="ml-1 h-3 w-3" />
-                </Badge>
-              ))}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {currentDatasets.map((dataset) => (
-              <Card
-                key={dataset._id}
-                className="bg-white border-gray-200 overflow-hidden group hover:shadow-md transition-all duration-300"
+        {selectedTags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {selectedTags.map((tag) => (
+              <Badge
+                key={tag}
+                variant="default"
+                className="cursor-pointer text-xs bg-green-100 text-green-800 hover:bg-green-200 transition-colors duration-300 flex items-center"
+                onClick={() => toggleTag(tag)}
               >
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-lg font-medium text-gray-700">
-                      {dataset.cardData?.pretty_name || "Unnamed Dataset"}
-                    </h3>
-                    {dataset.isPremium && (
-                      <Badge
-                        variant="default"
-                        className="bg-yellow-100 text-yellow-800"
-                      >
-                        <Star className="h-3 w-3 mr-1" />
-                        Premium
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Size:</span>
-                      <span className="text-gray-700">
-                        {dataset.cardData?.size_categories?.[0] || "Unknown"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Downloads:</span>
-                      <span className="text-gray-700">
-                        {dataset.downloads ?? "N/A"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Last Updated:</span>
-                      <span className="text-gray-700">
-                        {new Date(dataset.lastModified).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {dataset.tags.slice(0, 3).map((tag) => (
-                      <Badge
-                        key={tag}
-                        variant="secondary"
-                        className="text-xs bg-gray-100 text-gray-600"
-                      >
-                        {getTagDisplayText(tag)}
-                      </Badge>
-                    ))}
-                    {dataset.tags.length > 3 && (
-                      <Badge
-                        variant="secondary"
-                        className="text-xs bg-gray-100 text-gray-600"
-                      >
-                        +{dataset.tags.length - 3} more
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="flex justify-between">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-white text-green-600 border-green-200 hover:bg-green-50 hover:border-green-300 transition-colors duration-300"
-                    >
-                      <Download className="h-4 w-4 mr-2" /> Download
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-white text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-colors duration-300"
-                      onClick={() => router.push(`/dataset/${dataset.id}`)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" /> View
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                <Tag className="w-3 h-3 mr-1" />
+                {getTagDisplayText(tag)}
+                <X className="ml-1 h-3 w-3" />
+              </Badge>
             ))}
           </div>
+        )}
 
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-500">
-              Showing {startIndex + 1} to{" "}
-              {Math.min(endIndex, filteredDatasets.length)} of{" "}
-              {filteredDatasets.length} datasets
-            </div>
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goToPreviousPage}
-                disabled={currentPage === 1}
-                className="text-gray-600 border-gray-200 hover: bg-gray-50 transition-colors duration-300"
+        <AnimatePresence>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {currentDatasets.map((dataset) => (
+              <motion.div
+                key={dataset._id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
               >
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goToNextPage}
-                disabled={currentPage === totalPages}
-                className="text-gray-600 border-gray-200 hover:bg-gray-50 transition-colors duration-300"
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
+                <DatasetCardComponent dataset={dataset} />
+              </motion.div>
+            ))}
+          </div>
+        </AnimatePresence>
+
+        <div className="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
+          <div className="text-sm text-gray-500 mb-4 sm:mb-0">
+            Showing {startIndex + 1} to{" "}
+            {Math.min(endIndex, filteredDatasets.length)} of{" "}
+            {filteredDatasets.length} datasets
+          </div>
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1}
+              className="text-gray-600 border-gray-200 hover:bg-gray-50 transition-colors duration-300"
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+              className="text-gray-600 border-gray-200 hover:bg-gray-50 transition-colors duration-300"
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
           </div>
         </div>
       </main>
     </div>
   );
 }
+
