@@ -5,10 +5,12 @@ import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
-
+import { Star } from "lucide-react";
+import { SubscriptionPopupComponent } from "../subscription-popup";
 export function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
+  const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
+  const [isYearly, setIsYearly] = useState(false);
   return (
     <div className="relative bg-white text-gray-800 shadow-sm">
       <div className="flex items-center justify-between px-8 py-4">
@@ -27,7 +29,21 @@ export function NavBar() {
           </div>
         </nav>
         <div></div>
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="hidden md:flex items-center space-x-2">
+          <Button
+            variant="outline"
+            className="bg-yellow-200 gap-1 text-yellow-700 hover:bg-yellow-100 border-yellow-400 rounded-full px-6 transition-all duration-300"
+            onClick={() => setIsSubscriptionOpen(true)}
+          >
+            <Star />
+            Premium
+          </Button>
+          <SubscriptionPopupComponent
+            isOpen={isSubscriptionOpen}
+            setIsOpen={setIsSubscriptionOpen}
+            isYearly={isYearly}
+            setIsYearly={setIsYearly}
+          />
           <Button
             variant="outline"
             className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200 rounded-full px-6 transition-all duration-300"
@@ -64,6 +80,20 @@ export function NavBar() {
             >
               Sign In
             </Button>
+            <Button
+              variant="outline"
+              className="bg-yellow-200 gap-1 w-full text-yellow-700 hover:bg-yellow-100 border-yellow-400 rounded-full px-6 transition-all duration-300"
+              onClick={() => setIsSubscriptionOpen(true)}
+            >
+              <Star />
+              Premium
+            </Button>
+            <SubscriptionPopupComponent
+              isOpen={isSubscriptionOpen}
+              setIsOpen={setIsSubscriptionOpen}
+              isYearly={isYearly}
+              setIsYearly={setIsYearly}
+            />
           </nav>
         </div>
       )}

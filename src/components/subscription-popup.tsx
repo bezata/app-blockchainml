@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,13 @@ import { Switch } from "@/components/ui/switch";
 interface PlanFeature {
   name: string;
   included: boolean;
+}
+
+interface SubscriptionPopupProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  isYearly: boolean;
+  setIsYearly: (isYearly: boolean) => void;
 }
 
 interface Plan {
@@ -75,19 +81,14 @@ const plans: Plan[] = [
   },
 ];
 
-export function SubscriptionPopupComponent() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isYearly, setIsYearly] = useState(false);
-
+export function SubscriptionPopupComponent({
+  isOpen,
+  setIsOpen,
+  isYearly,
+  setIsYearly,
+}: SubscriptionPopupProps) {
   return (
-    <div className=" flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 p-8">
-      <Button
-        onClick={() => setIsOpen(true)}
-        className="bg-green-500 hover:bg-green-600 text-white transition-colors duration-300"
-      >
-        View Subscription Plans
-      </Button>
-
+    <div className="bg-transparent w-0 h-0">
       <AnimatePresence>
         {isOpen && (
           <motion.div
