@@ -126,7 +126,7 @@ export default function BlockchainMLApp() {
           transition={{ duration: 0.5 }}
           className="text-3xl font-light mb-8"
         >
-          Dataset Dashboard
+
         </motion.h1>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
