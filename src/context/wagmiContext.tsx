@@ -6,6 +6,7 @@ import { createAppKit } from "@reown/appkit/react";
 import { polygon } from "@reown/appkit/networks";
 import React, { type ReactNode } from "react";
 import { WagmiProvider, type Config } from "wagmi";
+import { siweConfig } from "@/configs/siweConfig";
 
 // Set up queryClient
 const queryClient = new QueryClient();
@@ -29,19 +30,12 @@ const modal = createAppKit({
     analytics: true, // Optional - defaults to your Cloud configuration
     swaps: true,
     onramp: true,
-    email: true, // default to true
-    socials: [
-      "google",
-      "x",
-      "github",
-      "discord",
-      "apple",
-      "facebook",
-      "farcaster",
-    ],
+    email: true,
+    socials: ["google", "x", "github", "discord", "apple", "facebook"],
     emailShowWallets: false, // default to true
   },
   themeMode: "light",
+  siweConfig: siweConfig, // pass your siweConfig
 });
 
 function ContextProvider({ children }: { children: ReactNode }) {
