@@ -1,21 +1,28 @@
 "use client";
 
+
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import { Menu, X } from "lucide-react";
-import { Star } from "lucide-react";
-import { SubscriptionPopupComponent } from "../subscription-popup";
 import { useAppKit } from "@reown/appkit/react";
 import { useAccount } from "wagmi";
+import Image from "next/image";
+import { Star, X, Menu } from "lucide-react";
+import { useRouter } from "next/router";
+import { SubscriptionPopupComponent } from "@/components/subscription-popup";
+import { useDisconnect } from "wagmi";
 
 export function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
   const [isYearly, setIsYearly] = useState(false);
+  const { disconnect } = useDisconnect();
+  const [isClient, setIsClient] = useState(false);
   const { open } = useAppKit();
   const { address } = useAccount();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   return (
     <div className="relative bg-white text-gray-800 shadow-sm">
@@ -50,13 +57,34 @@ export function NavBar() {
             isYearly={isYearly}
             setIsYearly={setIsYearly}
           />
-          <Button
-            variant="outline"
-            className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200 rounded-full px-6 transition-all duration-300"
-            onClick={() => open({ view: "Account" })}
-          >
-            {address ? "Sign Out" : "Sign In"}
-          </Button>
+          {isClient ? (
+            address ? (
+              <Button
+                variant="outline"
+                className="bg-red-50 text-red-700 hover:bg-red-100 border-red-200 rounded-full px-6 transition-all duration-300"
+                onClick={() => {
+                  disconnect();
+                }}
+              >
+                Sign Out
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200 rounded-full px-6 transition-all duration-300"
+                onClick={() => open({ view: "Account" })}
+              >
+                Sign In
+              </Button>
+            )
+          ) : (
+            <Button
+              variant="outline"
+              className="bg-gray-50 text-gray-700 hover:bg-gray-100 border-gray-200 rounded-full px-6 transition-all duration-300"
+            >
+              Loading...
+            </Button>
+          )}
         </div>
         <div className="md:hidden">
           <Button
