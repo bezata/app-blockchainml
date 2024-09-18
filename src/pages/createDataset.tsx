@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavBar } from "@/components/component/nav-bar";
+import Papa from "papaparse";
 
 const API_BASE_URL = "http://localhost:4000/api/v1";
 
@@ -58,7 +59,23 @@ export default function CreateDataset() {
     }
 
     try {
-      const fileData = await readFileAsBase64(file);
+      let fileData: string | object[] | object;
+      const fileType = file.type;
+
+      switch (fileType) {
+        case "application/json":
+        case "application/vnd.croissant+json":
+          fileData = await parseJsonFile(file);
+          break;
+        case "text/csv":
+          fileData = await parseCsvFile(file);
+          break;
+        case "application/x-parquet":
+          fileData = await readFileAsBase64(file);
+          break;
+        default:
+          fileData = await readFileAsBase64(file);
+      }
 
       const payload = {
         title,
@@ -68,10 +85,21 @@ export default function CreateDataset() {
         file: {
           name: file.name,
           size: file.size,
-          type: file.type,
-          data: fileData,
+          type: fileType,
+          data: JSON.stringify(fileData), // Stringify all data before sending
         },
       };
+
+      console.log("Payload being sent:", {
+        ...payload,
+        file: {
+          ...payload.file,
+          data:
+            typeof payload.file.data === "string"
+              ? payload.file.data.slice(0, 100) + "..."
+              : "<<stringified data>>",
+        },
+      });
 
       const response = await fetch(`${API_BASE_URL}/datasets`, {
         method: "POST",
@@ -99,6 +127,25 @@ export default function CreateDataset() {
     }
   };
 
+  const parseJsonFile = async (file: File): Promise<object> => {
+    const text = await readFileAsText(file);
+    return JSON.parse(text);
+  };
+
+  const parseCsvFile = async (file: File): Promise<object[]> => {
+    return new Promise((resolve, reject) => {
+      Papa.parse(file, {
+        complete: (results) => {
+          resolve(results.data as object[]);
+        },
+        header: true,
+        error: (error) => {
+          reject(error);
+        },
+      });
+    });
+  };
+
   const readFileAsBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -111,6 +158,21 @@ export default function CreateDataset() {
       };
       reader.onerror = (error) => reject(error);
       reader.readAsDataURL(file);
+    });
+  };
+
+  const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target && typeof event.target.result === "string") {
+          resolve(event.target.result);
+        } else {
+          reject(new Error("Failed to read file as text"));
+        }
+      };
+      reader.onerror = (error) => reject(error);
+      reader.readAsText(file);
     });
   };
 

@@ -7,10 +7,16 @@ import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { Star } from "lucide-react";
 import { SubscriptionPopupComponent } from "../subscription-popup";
+import { useAppKit } from "@reown/appkit/react";
+import { useAccount } from "wagmi";
+
 export function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
   const [isYearly, setIsYearly] = useState(false);
+  const { open } = useAppKit();
+  const { address } = useAccount();
+
   return (
     <div className="relative bg-white text-gray-800 shadow-sm">
       <div className="flex items-center justify-between px-8 py-4">
@@ -47,8 +53,9 @@ export function NavBar() {
           <Button
             variant="outline"
             className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200 rounded-full px-6 transition-all duration-300"
+            onClick={() => open({ view: "Account" })}
           >
-            Sign In
+            {address ? "Sign Out" : "Sign In"}
           </Button>
         </div>
         <div className="md:hidden">
@@ -81,6 +88,7 @@ export function NavBar() {
             <Button
               variant="outline"
               className="w-full bg-green-50 text-green-700 hover:bg-green-100 border-green-200 rounded-full px-6 transition-all duration-300"
+              onClick={() => open({ view: "Account" })}
             >
               Sign In
             </Button>
