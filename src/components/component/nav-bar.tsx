@@ -298,7 +298,7 @@ function NavLink({
   );
 }
 
-function DatabaseIcon(props: React.SVGProps<SVGSVGElement>) {
+export function DatabaseIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
@@ -319,7 +319,7 @@ function DatabaseIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-function LayoutDashboardIcon(props: React.SVGProps<SVGSVGElement>) {
+export function LayoutDashboardIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
@@ -341,7 +341,7 @@ function LayoutDashboardIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-function ViewIcon(props: React.SVGProps<SVGSVGElement>) {
+export function ViewIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
@@ -363,7 +363,7 @@ function ViewIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-function SaveIcon(props: React.SVGProps<SVGSVGElement>) {
+export function SaveIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
