@@ -248,7 +248,7 @@ export function NavBar() {
     </div>
   );
 }
-function NavLink({
+export default function NavLink({
   href,
   icon,
   text,
