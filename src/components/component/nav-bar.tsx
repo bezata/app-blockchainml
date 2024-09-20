@@ -248,7 +248,6 @@ export function NavBar() {
     </div>
   );
 }
-
 function NavLink({
   href,
   icon,
@@ -403,3 +402,4 @@ function MoneyIcon(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
