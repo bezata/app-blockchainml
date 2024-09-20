@@ -27,13 +27,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import NavLink from "./nav-link";
+import { NavLinks } from "@/components/ui/nav-link";
 import {
   LayoutDashboardIcon,
   DatabaseIcon,
   ViewIcon,
   SaveIcon,
-} from "./nav-link";
+} from "@/components/ui/nav-link";
 
 export function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -100,15 +100,19 @@ export function NavBar() {
             <Image src="/angry.png" alt="Logo" width={48} height={48} />
           </button>
           <div className="hidden md:flex items-center space-x-6">
-            <NavLink href="/" icon={<LayoutDashboardIcon />} text="Dashboard" />
-            <NavLink href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
-            <NavLink href="/models" icon={<ViewIcon />} text="Models" />
-            <NavLink
+            <NavLinks
+              href="/"
+              icon={<LayoutDashboardIcon />}
+              text="Dashboard"
+            />
+            <NavLinks href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
+            <NavLinks href="/models" icon={<ViewIcon />} text="Models" />
+            <NavLinks
               href="/savedItems"
               icon={<SaveIcon />}
               text="Saved Items"
             />
-            <NavLink href="/monetization" icon={<DollarSign />} text="Earn" />
+            <NavLinks href="/monetization" icon={<DollarSign />} text="Earn" />
           </div>
         </nav>
         <div className="hidden md:flex items-center space-x-2">
@@ -214,15 +218,19 @@ export function NavBar() {
       {isMenuOpen && (
         <div className="absolute top-full left-0 right-0 bg-white shadow-md md:hidden z-50">
           <nav className="flex flex-col items-start p-4 space-y-4">
-            <NavLink href="/" icon={<LayoutDashboardIcon />} text="Dashboard" />
-            <NavLink href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
-            <NavLink href="/models" icon={<ViewIcon />} text="Models" />
-            <NavLink
+            <NavLinks
+              href="/"
+              icon={<LayoutDashboardIcon />}
+              text="Dashboard"
+            />
+            <NavLinks href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
+            <NavLinks href="/models" icon={<ViewIcon />} text="Models" />
+            <NavLinks
               href="/savedItems"
               icon={<SaveIcon />}
               text="Saved Items"
             />
-            <NavLink href="/monetization" icon={<DollarSign />} text="Earn" />
+            <NavLinks href="/monetization" icon={<DollarSign />} text="Earn" />
             {isClient && !address && (
               <Button
                 variant="outline"

@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 
-export default function NavLink({
+export function NavLinks({
   href,
   icon,
   text,
@@ -135,4 +135,3 @@ export function SaveIcon(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
-

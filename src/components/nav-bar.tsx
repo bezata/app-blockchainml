@@ -5,12 +5,34 @@ import { Button } from "@/components/ui/button";
 import { useAppKit } from "@reown/appkit/react";
 import { useAccount, useDisconnect } from "wagmi";
 import Image from "next/image";
-import { Star, X, Menu, ChevronDown, User, Wallet, DollarSign, Settings, LogOut, LayoutDashboard } from "lucide-react";
-import { useRouter } from "next/router";
+import {
+  Star,
+  X,
+  Menu,
+  ChevronDown,
+  User,
+  Wallet,
+  DollarSign,
+  Settings,
+  LogOut,
+  LayoutDashboard,
+} from "lucide-react";
 import { SubscriptionPopupComponent } from "@/components/subscription-popup";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { motion, AnimatePresence } from 'framer-motion';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { NavLinks } from "@/components/ui/nav-link";
+import {
+  LayoutDashboardIcon,
+  DatabaseIcon,
+  ViewIcon,
+  SaveIcon,
+} from "@/components/ui/nav-link";
 
 export function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -68,11 +90,19 @@ export function NavBar() {
         <nav className="flex items-center space-x-8">
           <Image src="/angry.png" alt="Logo" width={48} height={48} />
           <div className="hidden md:flex items-center space-x-6">
-            <NavLink href="/" icon={<LayoutDashboardIcon />} text="Dashboard" />
-            <NavLink href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
-            <NavLink href="/models" icon={<ViewIcon />} text="Models" />
-            <NavLink href="/savedItems" icon={<SaveIcon />} text="Saved Items" />
-            <NavLink href="/monetization" icon={<MoneyIcon />} text="Earn" />
+            <NavLinks
+              href="/"
+              icon={<LayoutDashboardIcon />}
+              text="Dashboard"
+            />
+            <NavLinks href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
+            <NavLinks href="/models" icon={<ViewIcon />} text="Models" />
+            <NavLinks
+              href="/savedItems"
+              icon={<SaveIcon />}
+              text="Saved Items"
+            />
+            <NavLinks href="/monetization" icon={<DollarSign />} text="Earn" />
           </div>
         </nav>
         <div className="hidden md:flex items-center space-x-2">
@@ -99,11 +129,18 @@ export function NavBar() {
                   className="flex items-center space-x-2 px-3 py-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                    <AvatarImage
+                      src="https://github.com/shadcn.png"
+                      alt="@shadcn"
+                    />
                     <AvatarFallback>CN</AvatarFallback>
                   </Avatar>
                   <span className="font-medium text-gray-700">Profile</span>
-                  <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${
+                      isProfileMenuOpen ? "rotate-180" : ""
+                    }`}
+                  />
                 </Button>
 
                 <AnimatePresence>
@@ -146,7 +183,10 @@ export function NavBar() {
               onClick={() => setIsMobileProfileOpen(true)}
             >
               <Avatar className="h-8 w-8">
-                <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                <AvatarImage
+                  src="https://github.com/shadcn.png"
+                  alt="@shadcn"
+                />
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar>
             </Button>
@@ -168,11 +208,19 @@ export function NavBar() {
       {isMenuOpen && (
         <div className="absolute top-full left-0 right-0 bg-white shadow-md md:hidden z-50">
           <nav className="flex flex-col items-start p-4 space-y-4">
-            <NavLink href="/" icon={<LayoutDashboardIcon />} text="Dashboard" />
-            <NavLink href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
-            <NavLink href="/models" icon={<ViewIcon />} text="Models" />
-            <NavLink href="/savedItems" icon={<SaveIcon />} text="Saved Items" />
-            <NavLink href="/monetization" icon={<MoneyIcon />} text="Earn" />
+            <NavLinks
+              href="/"
+              icon={<LayoutDashboardIcon />}
+              text="Dashboard"
+            />
+            <NavLinks href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
+            <NavLinks href="/models" icon={<ViewIcon />} text="Models" />
+            <NavLinks
+              href="/savedItems"
+              icon={<SaveIcon />}
+              text="Saved Items"
+            />
+            <NavLinks href="/monetization" icon={<DollarSign />} text="Earn" />
             {isClient && !address && (
               <Button
                 variant="outline"
