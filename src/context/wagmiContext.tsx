@@ -13,9 +13,9 @@ const queryClient = new QueryClient();
 
 // Set up metadata
 const metadata = {
-  name: "appkit-example-scroll",
-  description: "AppKit Example - Scroll",
-  url: "https://scrollapp.com", // origin must match your domain & subdomain
+  name: "BML",
+  description: "BML",
+  url: "https://ugabuga-git-main-bezatas-projects.vercel.app/?_vercel_share=BTOwwvZOH7pz1kuCoPgwwgR0yDGHyhO9", // origin must match your domain & subdomain
   icons: ["https://avatars.githubusercontent.com/u/179229932"],
 };
 
