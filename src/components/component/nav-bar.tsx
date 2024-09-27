@@ -8,6 +8,7 @@ import Image from "next/image";
 import {
   Star,
   X,
+  MessageCircleCode,
   Menu,
   ChevronDown,
   User,
@@ -224,13 +225,14 @@ export function NavBar() {
               text="Dashboard"
             />
             <NavLinks href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
-            <NavLinks href="/models" icon={<ViewIcon />} text="Models" />
+            <NavLinks href="/models" icon={<ViewIcon />} text="Models" />{" "}
+            <NavLinks href="/chat" icon={<MessageCircleCode />} text="Chat" />
+            <NavLinks href="/monetization" icon={<DollarSign />} text="Earn" />
             <NavLinks
               href="/savedItems"
               icon={<SaveIcon />}
               text="Saved Items"
             />
-            <NavLinks href="/monetization" icon={<DollarSign />} text="Earn" />
             {isClient && !address && (
               <Button
                 variant="outline"

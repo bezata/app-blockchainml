@@ -35,7 +35,7 @@ const modal = createAppKit({
     emailShowWallets: false, // default to true
   },
   themeMode: "light",
-  siweConfig: siweConfig, // pass your siweConfig
+  siweConfig: siweConfig,
 });
 
 function ContextProvider({ children }: { children: ReactNode }) {

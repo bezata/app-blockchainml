@@ -18,9 +18,10 @@ import {
   Users,
   BarChart2,
   Tag,
+  PlusIcon,
 } from "lucide-react";
 import DatasetCardComponent from "./dataset-card";
-
+import { useRouter } from "next/navigation";
 import {
   Sheet,
   SheetContent,
@@ -97,7 +98,7 @@ export default function BlockchainMLDatasetBrowser({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-
+  const router = useRouter();
   const categorizedTags = useMemo(() => {
     const tags: { [key: string]: Set<string> } = {};
     datasets.forEach((dataset) => {
@@ -353,6 +354,16 @@ export default function BlockchainMLDatasetBrowser({
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+            <Button
+              variant="outline"
+              className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-300"
+              onClick={() => {
+                router.push("/createDataset");
+              }}
+            >
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Create Dataset
+            </Button>
             <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
               <SheetTrigger asChild>
                 <Button
