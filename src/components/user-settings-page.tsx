@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -75,44 +77,57 @@ export default function UserSettingsPage() {
   };
 
   const handleSave = () => {
-    // Here you would typically send the updated user data to your backend
     console.log("Saving user settings:", user);
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <NavBar />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">User Settings</h1>
+        <h1 className="text-3xl font-bold mb-8 text-gray-800">User Settings</h1>
 
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
           className="space-y-4"
         >
-          <TabsList>
-            <TabsTrigger value="profile">
+          <TabsList className="bg-white rounded-lg p-1 shadow-sm">
+            <TabsTrigger
+              value="profile"
+              className="data-[state=active]:bg-green-500 data-[state=active]:text-white"
+            >
               <User className="w-4 h-4 mr-2" />
               Profile
             </TabsTrigger>
-            <TabsTrigger value="account">
+            <TabsTrigger
+              value="account"
+              className="data-[state=active]:bg-green-500 data-[state=active]:text-white"
+            >
               <Lock className="w-4 h-4 mr-2" />
               Account
             </TabsTrigger>
-            <TabsTrigger value="notifications">
+            <TabsTrigger
+              value="notifications"
+              className="data-[state=active]:bg-green-500 data-[state=active]:text-white"
+            >
               <Bell className="w-4 h-4 mr-2" />
               Notifications
             </TabsTrigger>
-            <TabsTrigger value="privacy">
+            <TabsTrigger
+              value="privacy"
+              className="data-[state=active]:bg-green-500 data-[state=active]:text-white"
+            >
               <Globe className="w-4 h-4 mr-2" />
               Privacy
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile">
-            <Card>
+            <Card className="bg-white shadow-sm">
               <CardHeader>
-                <CardTitle>Profile Settings</CardTitle>
+                <CardTitle className="text-2xl font-semibold text-gray-800">
+                  Profile Settings
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-4">
@@ -125,45 +140,61 @@ export default function UserSettingsPage() {
                         .join("")}
                     </AvatarFallback>
                   </Avatar>
-                  <Button>Change Avatar</Button>
+                  <Button className="bg-green-500 hover:bg-green-600 text-white">
+                    Change Avatar
+                  </Button>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name" className="text-gray-700">
+                    Name
+                  </Label>
                   <Input
                     id="name"
                     name="name"
                     value={user.name}
                     onChange={handleInputChange}
+                    className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-gray-700">
+                    Email
+                  </Label>
                   <Input
                     id="email"
                     name="email"
                     type="email"
                     value={user.email}
                     onChange={handleInputChange}
+                    className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
+                  <Label htmlFor="bio" className="text-gray-700">
+                    Bio
+                  </Label>
                   <Textarea
                     id="bio"
                     name="bio"
                     value={user.bio}
                     onChange={handleInputChange}
+                    className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="language">Language</Label>
+                  <Label htmlFor="language" className="text-gray-700">
+                    Language
+                  </Label>
                   <Select
                     value={user.language}
                     onValueChange={(value) =>
                       setUser((prevUser) => ({ ...prevUser, language: value }))
                     }
                   >
-                    <SelectTrigger id="language">
+                    <SelectTrigger
+                      id="language"
+                      className="border-gray-300 focus:border-green-500 focus:ring-green-500"
+                    >
                       <SelectValue placeholder="Select a language" />
                     </SelectTrigger>
                     <SelectContent>
@@ -179,22 +210,42 @@ export default function UserSettingsPage() {
           </TabsContent>
 
           <TabsContent value="account">
-            <Card>
+            <Card className="bg-white shadow-sm">
               <CardHeader>
-                <CardTitle>Account Settings</CardTitle>
+                <CardTitle className="text-2xl font-semibold text-gray-800">
+                  Account Settings
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="current-password">Current Password</Label>
-                  <Input id="current-password" type="password" />
+                  <Label htmlFor="current-password" className="text-gray-700">
+                    Current Password
+                  </Label>
+                  <Input
+                    id="current-password"
+                    type="password"
+                    className="border-gray-300 focus:border-green-500 focus:ring-green-500"
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="new-password">New Password</Label>
-                  <Input id="new-password" type="password" />
+                  <Label htmlFor="new-password" className="text-gray-700">
+                    New Password
+                  </Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    className="border-gray-300 focus:border-green-500 focus:ring-green-500"
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm New Password</Label>
-                  <Input id="confirm-password" type="password" />
+                  <Label htmlFor="confirm-password" className="text-gray-700">
+                    Confirm New Password
+                  </Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    className="border-gray-300 focus:border-green-500 focus:ring-green-500"
+                  />
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch
@@ -206,8 +257,9 @@ export default function UserSettingsPage() {
                         twoFactor: checked,
                       }))
                     }
+                    className="data-[state=checked]:bg-green-500"
                   />
-                  <Label htmlFor="two-factor">
+                  <Label htmlFor="two-factor" className="text-gray-700">
                     Enable Two-Factor Authentication
                   </Label>
                 </div>
@@ -216,9 +268,11 @@ export default function UserSettingsPage() {
           </TabsContent>
 
           <TabsContent value="notifications">
-            <Card>
+            <Card className="bg-white shadow-sm">
               <CardHeader>
-                <CardTitle>Notification Preferences</CardTitle>
+                <CardTitle className="text-2xl font-semibold text-gray-800">
+                  Notification Preferences
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-2">
@@ -228,8 +282,12 @@ export default function UserSettingsPage() {
                     onCheckedChange={(checked) =>
                       handleSwitchChange("email", checked)
                     }
+                    className="data-[state=checked]:bg-green-500"
                   />
-                  <Label htmlFor="email-notifications">
+                  <Label
+                    htmlFor="email-notifications"
+                    className="text-gray-700"
+                  >
                     Email Notifications
                   </Label>
                 </div>
@@ -240,8 +298,11 @@ export default function UserSettingsPage() {
                     onCheckedChange={(checked) =>
                       handleSwitchChange("push", checked)
                     }
+                    className="data-[state=checked]:bg-green-500"
                   />
-                  <Label htmlFor="push-notifications">Push Notifications</Label>
+                  <Label htmlFor="push-notifications" className="text-gray-700">
+                    Push Notifications
+                  </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch
@@ -250,28 +311,38 @@ export default function UserSettingsPage() {
                     onCheckedChange={(checked) =>
                       handleSwitchChange("sms", checked)
                     }
+                    className="data-[state=checked]:bg-green-500"
                   />
-                  <Label htmlFor="sms-notifications">SMS Notifications</Label>
+                  <Label htmlFor="sms-notifications" className="text-gray-700">
+                    SMS Notifications
+                  </Label>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="privacy">
-            <Card>
+            <Card className="bg-white shadow-sm">
               <CardHeader>
-                <CardTitle>Privacy Settings</CardTitle>
+                <CardTitle className="text-2xl font-semibold text-gray-800">
+                  Privacy Settings
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="profile-visibility">Profile Visibility</Label>
+                  <Label htmlFor="profile-visibility" className="text-gray-700">
+                    Profile Visibility
+                  </Label>
                   <Select
                     value={user.privacy.profileVisibility}
                     onValueChange={(value) =>
                       handlePrivacyChange("profileVisibility", value)
                     }
                   >
-                    <SelectTrigger id="profile-visibility">
+                    <SelectTrigger
+                      id="profile-visibility"
+                      className="border-gray-300 focus:border-green-500 focus:ring-green-500"
+                    >
                       <SelectValue placeholder="Select profile visibility" />
                     </SelectTrigger>
                     <SelectContent>
@@ -288,8 +359,9 @@ export default function UserSettingsPage() {
                     onCheckedChange={(checked) =>
                       handlePrivacyChange("showEmail", checked)
                     }
+                    className="data-[state=checked]:bg-green-500"
                   />
-                  <Label htmlFor="show-email">
+                  <Label htmlFor="show-email" className="text-gray-700">
                     Show Email Address on Profile
                   </Label>
                 </div>
@@ -299,10 +371,20 @@ export default function UserSettingsPage() {
         </Tabs>
 
         <div className="mt-8 flex justify-end space-x-4">
-          <Button variant="outline">Cancel</Button>
-          <Button onClick={handleSave}>Save Changes</Button>
+          <Button
+            variant="outline"
+            className="border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            className="bg-green-500 hover:bg-green-600 text-white"
+          >
+            Save Changes
+          </Button>
         </div>
       </div>
-    </>
+    </div>
   );
 }

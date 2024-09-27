@@ -3,11 +3,14 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Label } from "@/components/ui/label";
 import {
   Mail,
   MapPin,
@@ -17,14 +20,15 @@ import {
   Database,
   Star,
   MessageCircle,
-  UserPlus,
-  Share2,
   User,
+  Settings,
+  Edit,
 } from "lucide-react";
 import { NavBar } from "@/components/component/nav-bar";
 
 export default function UserProfilePage() {
   const [activeTab, setActiveTab] = useState("overview");
+  const [isEditing, setIsEditing] = useState(false);
   const [user, setUser] = useState({
     name: "Jane Smith",
     email: "jane.smith@example.com",
@@ -87,6 +91,18 @@ export default function UserProfilePage() {
     },
   ];
 
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setUser((prevUser) => ({ ...prevUser, [name]: value }));
+  };
+
+  const handleSave = () => {
+    console.log("Saving user profile:", user);
+    setIsEditing(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <NavBar />
@@ -109,32 +125,79 @@ export default function UserProfilePage() {
                   Posts
                 </Button>
                 <Button variant="outline">
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Follow
+                  <Settings className="w-4 h-4 mr-2" />
+                  Settings
                 </Button>
-                <Button variant="outline">
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditing(!isEditing)}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  {isEditing ? "Cancel Edit" : "Edit Profile"}
                 </Button>
               </div>
             </div>
             <div className="flex-grow space-y-4 text-center md:text-left">
-              <h1 className="text-3xl font-bold">{user.name}</h1>
-              <p className="text-gray-600">{user.bio}</p>
-              <div className="flex flex-wrap justify-center md:justify-start gap-4">
-                <span className="flex items-center text-gray-600">
-                  <Mail className="w-4 h-4 mr-2" />
-                  {user.email}
-                </span>
-                <span className="flex items-center text-gray-600">
-                  <MapPin className="w-4 h-4 mr-2" />
-                  {user.location}
-                </span>
-                <span className="flex items-center text-gray-600">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Joined {user.joinDate}
-                </span>
-              </div>
+              {isEditing ? (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="name">Name</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      value={user.name}
+                      onChange={handleInputChange}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="bio">Bio</Label>
+                    <Textarea
+                      id="bio"
+                      name="bio"
+                      value={user.bio}
+                      onChange={handleInputChange}
+                      className="mt-1"
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      name="location"
+                      value={user.location}
+                      onChange={handleInputChange}
+                      className="mt-1"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleSave}
+                    className="bg-green-500 hover:bg-green-600 text-white"
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <h1 className="text-3xl font-bold">{user.name}</h1>
+                  <p className="text-gray-600">{user.bio}</p>
+                  <div className="flex flex-wrap justify-center md:justify-start gap-4">
+                    <span className="flex items-center text-gray-600">
+                      <Mail className="w-4 h-4 mr-2" />
+                      {user.email}
+                    </span>
+                    <span className="flex items-center text-gray-600">
+                      <MapPin className="w-4 h-4 mr-2" />
+                      {user.location}
+                    </span>
+                    <span className="flex items-center text-gray-600">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Joined {user.joinDate}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>

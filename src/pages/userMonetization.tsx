@@ -1,5 +1,5 @@
 import UserEarningPage from "@/components/user-earning-page";
 
-export default function UserEarning() {
+export default function userMonetization() {
   return <UserEarningPage />;
 }

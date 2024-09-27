@@ -53,11 +53,23 @@ export function NavBar() {
   }, []);
 
   const profileMenuItems = [
-    { icon: LayoutDashboard, label: "My Dashboard" },
+    {
+      icon: User,
+      label: "Profile",
+      onClick: () => router.push("/userProfile"),
+    },
     { icon: Wallet, label: "Wallet", onClick: () => open() },
-    { icon: DollarSign, label: "Monetization" },
-    { icon: Settings, label: "Settings" },
-    { icon: User, label: "Profile" },
+    {
+      icon: DollarSign,
+      label: "Monetization",
+      onClick: () => router.push("/userMonetization"),
+    },
+    {
+      icon: Settings,
+      label: "Settings",
+      onClick: () => router.push("/settings"),
+    },
+
     { icon: LogOut, label: "Logout", onClick: () => disconnect() },
   ];
 
@@ -107,13 +119,14 @@ export function NavBar() {
               text="Dashboard"
             />
             <NavLinks href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
-            <NavLinks href="/models" icon={<ViewIcon />} text="Models" />
+            <NavLinks href="/models" icon={<ViewIcon />} text="Models" />{" "}
+            <NavLinks href="/chat" icon={<MessageCircleCode />} text="Forum" />
+            <NavLinks href="/monetization" icon={<DollarSign />} text="Earn" />
             <NavLinks
               href="/savedItems"
               icon={<SaveIcon />}
               text="Saved Items"
             />
-            <NavLinks href="/monetization" icon={<DollarSign />} text="Earn" />
           </div>
         </nav>
         <div className="hidden md:flex items-center space-x-2">
@@ -146,7 +159,7 @@ export function NavBar() {
                     />
                     <AvatarFallback>CN</AvatarFallback>
                   </Avatar>
-                  <span className="font-medium text-gray-700">Profile</span>
+                  <span className="font-medium text-gray-700">Menu</span>
                   <ChevronDown
                     className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${
                       isProfileMenuOpen ? "rotate-180" : ""
