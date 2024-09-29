@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useRef, useMemo } from "react";
 import { NavBar } from "./component/nav-bar";
 import { Button } from "@/components/ui/button";
@@ -19,6 +17,7 @@ import {
   BarChart2,
   Tag,
   PlusIcon,
+  ChevronDown,
 } from "lucide-react";
 import DatasetCardComponent from "./dataset-card";
 import { useRouter } from "next/navigation";
@@ -29,7 +28,15 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  SheetClose,
 } from "@/components/ui/sheet";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LineChart,
@@ -88,17 +95,14 @@ const trendingData = [
   { name: "Jun", downloads: 5500, monetization: 3800 },
 ];
 
-export default function BlockchainMLDatasetBrowser({
-  datasets,
-}: {
-  datasets: Dataset[];
-}) {
+export default function DatasetsList({ datasets }: { datasets: Dataset[] }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const router = useRouter();
+
   const categorizedTags = useMemo(() => {
     const tags: { [key: string]: Set<string> } = {};
     datasets.forEach((dataset) => {
@@ -150,22 +154,7 @@ export default function BlockchainMLDatasetBrowser({
 
   const TagsContent = () => {
     const [tagSearchTerm, setTagSearchTerm] = useState("");
-    const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-
-    const getSelectedTagCount = (category: string) => {
-      const tagsInCategory =
-        filteredTags.find((c) => c.category === category)?.tags || [];
-      return tagsInCategory.filter((tag) => selectedTags.includes(tag)).length;
-    };
-
-    const handleScrollToCategory = (category: string) => {
-      if (categoryRefs.current[category]) {
-        categoryRefs.current[category]?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
-    };
+    const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
     const filteredTags = useMemo(() => {
       return categorizedTags.map((category) => ({
@@ -178,69 +167,55 @@ export default function BlockchainMLDatasetBrowser({
       }));
     }, [tagSearchTerm]);
 
+    const toggleCategory = (category: string) => {
+      setExpandedCategories((prev) =>
+        prev.includes(category)
+          ? prev.filter((c) => c !== category)
+          : [...prev, category]
+      );
+    };
+
     return (
       <div className="flex flex-col space-y-4">
-        <div className="flex flex-wrap gap-2">
-          {filteredTags.map(({ category }) => {
-            const count = getSelectedTagCount(category);
-            return (
-              <Button
-                key={category}
-                variant="ghost"
-                onClick={() => handleScrollToCategory(category)}
-                className="text-gray-600 hover:text-gray-800 relative transition-colors duration-300"
-              >
-                {category}
-                {count > 0 && (
-                  <span className="absolute right-0 top-0 text-xs bg-green-100 text-green-800 px-1 rounded-full">
-                    {count}
-                  </span>
-                )}
-              </Button>
-            );
-          })}
-        </div>
         <Input
           placeholder="Search tags"
           value={tagSearchTerm}
           onChange={(e) => setTagSearchTerm(e.target.value)}
           className="mb-4 bg-white border-gray-200 focus:border-green-300 focus:ring-green-200 transition-all duration-300"
         />
-        <div
-          className="max-h-[calc(100vh-200px)] overflow-y-auto pr-4"
-          style={{
-            scrollbarWidth: "thin",
-            scrollbarColor: "#E2E8F0 #F8FAFC",
-          }}
-        >
-          {filteredTags.map(({ category, tags }) => (
-            <div
-              key={category}
-              ref={(el) => {
-                if (el) categoryRefs.current[category] = el;
-              }}
-              className="mb-6"
-            >
-              <h3 className="text-sm font-medium text-gray-600 mb-2">
-                {category}
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant={
-                      selectedTags.includes(tag) ? "default" : "secondary"
-                    }
-                    className="cursor-pointer text-xs bg-gray-100 text-gray-800 hover:bg-green-100 hover:text-green-800 transition-colors duration-300"
-                    onClick={() => toggleTag(tag)}
-                  >
-                    {getTagDisplayText(tag)}
+        <ScrollArea className="h-[calc(100vh-200px)]">
+          <Accordion type="multiple" className="w-full">
+            {filteredTags.map(({ category, tags }) => (
+              <AccordionItem value={category} key={category}>
+                <AccordionTrigger
+                  onClick={() => toggleCategory(category)}
+                  className="text-sm font-medium text-gray-700 hover:text-green-600 transition-colors duration-300"
+                >
+                  {category}{" "}
+                  <Badge variant="secondary" className="ml-2">
+                    {tags.length}
                   </Badge>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {tags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant={
+                          selectedTags.includes(tag) ? "default" : "secondary"
+                        }
+                        className="cursor-pointer text-xs bg-gray-100 text-gray-800 hover:bg-green-100 hover:text-green-800 transition-colors duration-300"
+                        onClick={() => toggleTag(tag)}
+                      >
+                        {getTagDisplayText(tag)}
+                      </Badge>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </ScrollArea>
       </div>
     );
   };
@@ -374,16 +349,27 @@ export default function BlockchainMLDatasetBrowser({
                   Filter Tags
                 </Button>
               </SheetTrigger>
-              <SheetContent className="bg-white text-gray-800">
+              <SheetContent
+                side="right"
+                className="w-[400px] sm:w-[540px] bg-white text-gray-800"
+              >
                 <SheetHeader>
-                  <SheetTitle className="text-gray-700">
+                  <SheetTitle className="text-xl font-light text-gray-700">
                     Filter by Tags
                   </SheetTitle>
                   <SheetDescription className="text-gray-500">
-                    Select tags to filter the datasets
+                    Select tags to filter the datasets. Click on a category to
+                    expand or collapse it.
                   </SheetDescription>
                 </SheetHeader>
-                <TagsContent />
+                <div className="mt-6">
+                  <TagsContent />
+                </div>
+                <SheetClose asChild>
+                  <Button className="mt-6 w-full bg-green-600 text-white hover:bg-green-700 transition-colors duration-300">
+                    Apply Filters
+                  </Button>
+                </SheetClose>
               </SheetContent>
             </Sheet>
           </div>
@@ -403,6 +389,14 @@ export default function BlockchainMLDatasetBrowser({
                 <X className="ml-1 h-3 w-3" />
               </Badge>
             ))}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedTags([])}
+              className="text-gray-500 hover:text-gray-700 transition-colors duration-300"
+            >
+              Clear All
+            </Button>
           </div>
         )}
 
@@ -455,4 +449,3 @@ export default function BlockchainMLDatasetBrowser({
     </div>
   );
 }
-
