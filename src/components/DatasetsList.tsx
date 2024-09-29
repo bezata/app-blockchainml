@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { NavBar } from "./component/nav-bar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,6 @@ import {
   BarChart2,
   Tag,
   PlusIcon,
-  ChevronDown,
 } from "lucide-react";
 import DatasetCardComponent from "./dataset-card";
 import { useRouter } from "next/navigation";
@@ -28,7 +27,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetClose,
+  SheetFooter,
 } from "@/components/ui/sheet";
 import {
   Accordion,
@@ -176,14 +175,45 @@ export default function DatasetsList({ datasets }: { datasets: Dataset[] }) {
     };
 
     return (
-      <div className="flex flex-col space-y-4">
-        <Input
-          placeholder="Search tags"
-          value={tagSearchTerm}
-          onChange={(e) => setTagSearchTerm(e.target.value)}
-          className="mb-4 bg-white border-gray-200 focus:border-green-300 focus:ring-green-200 transition-all duration-300"
-        />
-        <ScrollArea className="h-[calc(100vh-200px)]">
+      <div className="flex flex-col space-y-4 h-full">
+        <div className="flex-shrink-0">
+          {selectedTags.length > 0 && (
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">
+                Active Filters
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {selectedTags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="default"
+                    className="cursor-pointer text-xs bg-green-100 text-green-800 hover:bg-green-200 transition-colors duration-300 flex items-center"
+                    onClick={() => toggleTag(tag)}
+                  >
+                    <Tag className="w-3 h-3 mr-1" />
+                    {getTagDisplayText(tag)}
+                    <X className="ml-1 h-3 w-3" />
+                  </Badge>
+                ))}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedTags([])}
+                  className="text-gray-500 hover:text-gray-700 transition-colors duration-300"
+                >
+                  Clear All
+                </Button>
+              </div>
+            </div>
+          )}
+          <Input
+            placeholder="Search tags"
+            value={tagSearchTerm}
+            onChange={(e) => setTagSearchTerm(e.target.value)}
+            className="mb-4 bg-white border-gray-200 focus:border-green-300 focus:ring-green-200 transition-all duration-300"
+          />
+        </div>
+        <ScrollArea className="flex-grow">
           <Accordion type="multiple" className="w-full">
             {filteredTags.map(({ category, tags }) => (
               <AccordionItem value={category} key={category}>
@@ -307,98 +337,79 @@ export default function DatasetsList({ datasets }: { datasets: Dataset[] }) {
 
         <h2 className="text-2xl font-light mb-6">All Datasets</h2>
 
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0 md:space-x-4">
-          <div className="w-full md:w-auto">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <div className="flex flex-col space-y-4 mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 md:space-x-4">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full md:w-auto"
+            >
               <TabsList>
                 <TabsTrigger value="all">All Datasets</TabsTrigger>
                 <TabsTrigger value="BlockchainML">BlockchainML</TabsTrigger>
                 <TabsTrigger value="HuggingFace">HuggingFace</TabsTrigger>
               </TabsList>
             </Tabs>
-          </div>
-
-          <div className="flex flex-col sm:flex-row w-full md:w-auto space-y-2 sm:space-y-0 sm:space-x-2">
-            <div className="relative flex-grow">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search datasets..."
-                className="pl-10 pr-4 py-2 w-full border-gray-200 focus:border-green-300 focus:ring-green-200 rounded-md transition-all duration-300"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <Button
-              variant="outline"
-              className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-300"
-              onClick={() => {
-                router.push("/createDataset");
-              }}
-            >
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Create Dataset
-            </Button>
-            <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-300"
-                >
-                  <Filter className="mr-2 h-4 w-4" />
-                  Filter Tags
-                </Button>
-              </SheetTrigger>
-              <SheetContent
-                side="right"
-                className="w-[400px] sm:w-[540px] bg-white text-gray-800"
+            <div className="flex flex-col sm:flex-row w-full md:w-auto space-y-2 sm:space-y-0 sm:space-x-2">
+              <div className="relative flex-grow">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Search datasets..."
+                  className="pl-10 pr-4 py-2 w-full border-gray-200 focus:border-green-300 focus:ring-green-200 rounded-md transition-all duration-300"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Button
+                variant="outline"
+                className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-300"
+                onClick={() => {
+                  router.push("/createDataset");
+                }}
               >
-                <SheetHeader>
-                  <SheetTitle className="text-xl font-light text-gray-700">
-                    Filter by Tags
-                  </SheetTitle>
-                  <SheetDescription className="text-gray-500">
-                    Select tags to filter the datasets. Click on a category to
-                    expand or collapse it.
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="mt-6">
-                  <TagsContent />
-                </div>
-                <SheetClose asChild>
-                  <Button className="mt-6 w-full bg-green-600 text-white hover:bg-green-700 transition-colors duration-300">
-                    Apply Filters
+                <PlusIcon className="mr-2 h-4 w-4" />
+                Create Dataset
+              </Button>
+              <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-300"
+                  >
+                    <Filter className="mr-2 h-4 w-4" />
+                    Filter Tags
                   </Button>
-                </SheetClose>
-              </SheetContent>
-            </Sheet>
+                </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  className="w-full sm:w-[540px] bg-white text-gray-800 flex flex-col"
+                >
+                  <SheetHeader>
+                    <SheetTitle className="text-xl font-light text-gray-700">
+                      Filter by Tags
+                    </SheetTitle>
+                    <SheetDescription className="text-gray-500">
+                      Select tags to filter the datasets. Click on a category to
+                      expand or collapse it.
+                    </SheetDescription>
+                  </SheetHeader>
+                  <div className="flex-grow overflow-hidden">
+                    <TagsContent />
+                  </div>
+                  <SheetFooter className="mt-6">
+                    <Button
+                      className="w-full bg-green-600 text-white hover:bg-green-700 transition-colors duration-300"
+                      onClick={() => setIsFilterOpen(false)}
+                    >
+                      Apply Filters
+                    </Button>
+                  </SheetFooter>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
-
-        {selectedTags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {selectedTags.map((tag) => (
-              <Badge
-                key={tag}
-                variant="default"
-                className="cursor-pointer text-xs bg-green-100 text-green-800 hover:bg-green-200 transition-colors duration-300 flex items-center"
-                onClick={() => toggleTag(tag)}
-              >
-                <Tag className="w-3 h-3 mr-1" />
-                {getTagDisplayText(tag)}
-                <X className="ml-1 h-3 w-3" />
-              </Badge>
-            ))}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedTags([])}
-              className="text-gray-500 hover:text-gray-700 transition-colors duration-300"
-            >
-              Clear All
-            </Button>
-          </div>
-        )}
 
         <AnimatePresence>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
