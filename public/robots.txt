@@ -1,0 +1,6 @@
+# robots.txt
+
+User-agent: *
+Allow: /
+
+Sitemap: https://localhost:3000/api/sitemap

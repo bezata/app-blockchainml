@@ -2,73 +2,75 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import DatasetProfile, {
-  Dataset as ComponentDataset,
-} from "@/components/DatasetProfile";
-import { Dataset as ApiDataset } from "@/types/dataset";
-import FuturisticLoadingScreen from "@/components/ui/loadingscreen";
-import ErrorPage from "@/components/ui/errorpage";
+import dynamic from "next/dynamic";
+import DatasetProfile from "@/components/DatasetProfile";
+import FuturisticErrorPage from "@/components/ui/errorpage";
+import { Dataset } from "@/types/dataset";
+import React from "react";
 
-export default function DatasetProfilePage() {
-  const [dataset, setDataset] = useState<ApiDataset | null>(null);
-  const [allDatasets, setAllDatasets] = useState<ApiDataset[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const FuturisticLoadingScreen = dynamic(
+  () => import("@/components/ui/loadingscreen"),
+  {
+    ssr: false,
+  }
+);
+
+export default function DatasetDetailPage() {
   const router = useRouter();
   const { id } = router.query;
+  const [dataset, setDataset] = useState<Dataset | null>(null);
+  const [allDatasets, setAllDatasets] = useState<Dataset[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchData() {
-      if (!id) return;
+    async function fetchDataset() {
+      if (id) {
+        try {
+          const datasetId = Array.isArray(id) ? id.join("/") : id;
+          const response = await fetch(`/api/dataset/${datasetId}`);
+          if (!response.ok) {
+            throw new Error("Failed to fetch dataset");
+          }
+          const data = await response.json();
+          setDataset(data);
 
-      const datasetId = Array.isArray(id) ? id.join("/") : id;
-
-      try {
-        // Fetch the specific dataset
-        const datasetResponse = await fetch(`/api/dataset/${datasetId}`);
-        if (!datasetResponse.ok) {
-          throw new Error("Failed to fetch dataset");
+          // Fetch all datasets
+          const allDatasetsResponse = await fetch("/api/datasets");
+          if (allDatasetsResponse.ok) {
+            const allDatasetsData = await allDatasetsResponse.json();
+            setAllDatasets(allDatasetsData);
+          }
+        } catch (err) {
+          setError(err instanceof Error ? err.message : String(err));
+        } finally {
+          setIsLoading(false);
         }
-        const datasetData = await datasetResponse.json();
-        setDataset(datasetData);
-
-        // Fetch all datasets
-        const allDatasetsResponse = await fetch("/api/datasets");
-        if (!allDatasetsResponse.ok) {
-          throw new Error("Failed to fetch all datasets");
-        }
-        const allDatasetsData = await allDatasetsResponse.json();
-        setAllDatasets(allDatasetsData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setIsLoading(false);
       }
     }
 
-    fetchData();
+    fetchDataset();
   }, [id]);
 
   if (isLoading) {
-    return <FuturisticLoadingScreen />;
+    return (
+      <div>
+        <FuturisticLoadingScreen />
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="p-6 bg-gray-900 min-h-screen text-white">
-        Error: {error}
+      <div>
+        <FuturisticErrorPage />
       </div>
     );
   }
 
   if (!dataset) {
-    return <ErrorPage />;
+    return <FuturisticErrorPage />;
   }
 
-  return (
-    <DatasetProfile
-      dataset={dataset as unknown as ComponentDataset}
-      allDatasets={allDatasets as unknown as ComponentDataset[]}
-    />
-  );
+  return <DatasetProfile dataset={dataset} allDatasets={allDatasets} />;
 }

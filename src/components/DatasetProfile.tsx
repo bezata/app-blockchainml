@@ -15,6 +15,7 @@ import { ArrowLeft, ExternalLink, Code, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { NavBar } from "./component/nav-bar";
+import Head from "next/head";
 
 interface Split {
   name: string;
@@ -76,6 +77,30 @@ const DatasetProfile: React.FC<{
     return dataset.cardData.dataset_info?.[0]?.splits ?? [];
   }, [dataset]);
 
+  const getStructuredData = () => {
+    return JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Dataset",
+      name: dataset.cardData.pretty_name,
+      description: dataset.description,
+      url: `https://localhost:3000/dataset/${dataset.id}`,
+      keywords: dataset.tags.join(", "),
+      datePublished: dataset.lastModified,
+      license: Array.isArray(dataset.cardData.license)
+        ? dataset.cardData.license[0]
+        : dataset.cardData.license,
+      creator: {
+        "@type": "Person",
+        name: dataset.author,
+      },
+      distribution: {
+        "@type": "DataDownload",
+        encodingFormat: "Parquet",
+        contentUrl: `https://huggingface.co/datasets/${dataset.id}`,
+      },
+    });
+  };
+
   const categorizedTags = useMemo(() => {
     const tags: { [key: string]: string[] } = {};
     dataset.tags.forEach((tag) => {
@@ -121,6 +146,45 @@ records = ds.records()`;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 text-gray-800 font-sans">
+      <Head>
+        <title>{`${dataset.cardData.pretty_name} | BlockchainML Dataset`}</title>
+        <meta name="description" content={dataset.description.slice(0, 160)} />
+        <meta
+          property="og:title"
+          content={`${dataset.cardData.pretty_name} | BlockchainML Dataset`}
+        />
+        <meta
+          property="og:description"
+          content={dataset.description.slice(0, 160)}
+        />
+        <meta property="og:type" content="website" />
+        <meta
+          property="og:url"
+          content={`https://your-domain.com/dataset/${dataset.id}`}
+        />
+        <meta
+          property="og:image"
+          content="https://your-domain.com/og-image.jpg"
+        />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content={`${dataset.cardData.pretty_name} | BlockchainML Dataset`}
+        />
+        <meta
+          name="twitter:description"
+          content={dataset.description.slice(0, 160)}
+        />
+        <meta
+          name="twitter:image"
+          content="https://your-domain.com/twitter-image.jpg"
+        />
+        <link
+          rel="canonical"
+          href={`https://your-domain.com/dataset/${dataset.id}`}
+        />
+        <script type="application/ld+json">{getStructuredData()}</script>
+      </Head>
       <NavBar />
       <main className="container mx-auto px-4 py-8">
         <Button

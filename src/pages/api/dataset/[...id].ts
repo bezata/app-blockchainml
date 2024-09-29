@@ -1,7 +1,11 @@
 // pages/api/dataset/[...id].ts
 
 import { NextApiRequest, NextApiResponse } from "next";
+import fs from "fs";
+import path from "path";
 import { Dataset } from "@/types/dataset";
+
+const DATASET_FILE = path.join(process.cwd(), "data", "datasets.json");
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,13 +16,6 @@ export default async function handler(
   }
 
   const { id } = req.query;
-  const huggingFaceApiKey = process.env.HUGGING_FACE_API_KEY;
-
-  if (!huggingFaceApiKey) {
-    return res
-      .status(500)
-      .json({ error: "Hugging Face API key is not configured" });
-  }
 
   if (!id || !Array.isArray(id)) {
     return res.status(400).json({ error: "Invalid dataset ID" });
@@ -27,21 +24,20 @@ export default async function handler(
   const datasetId = id.join("/");
 
   try {
-    const response = await fetch(
-      `https://huggingface.co/api/datasets/${datasetId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${huggingFaceApiKey}`,
-        },
+    if (fs.existsSync(DATASET_FILE)) {
+      const datasets: Dataset[] = JSON.parse(
+        fs.readFileSync(DATASET_FILE, "utf-8")
+      );
+      const dataset = datasets.find((d) => d.id === datasetId);
+
+      if (dataset) {
+        res.status(200).json(dataset);
+      } else {
+        res.status(404).json({ error: "Dataset not found" });
       }
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch dataset");
+    } else {
+      res.status(404).json({ error: "No datasets found" });
     }
-
-    const data: Dataset = await response.json();
-    res.status(200).json(data);
   } catch (error) {
     console.error("Error fetching dataset:", error);
     res.status(500).json({ error: "Failed to fetch dataset" });

@@ -12,14 +12,12 @@ export interface Dataset {
     language: string[];
     paperswithcode_id: string;
     dataset_info: {
+      config_name: string;
+      splits: Split[];
       dataset_size: number;
       download_size: number;
-      splits: Array<{
-        name: string;
-        num_examples: number;
-      }>;
-    };
-    configs: { config_name: string; splits: Split[] }[];
+    }[];
+    configs: { config_name: string }[];
   };
   lastModified: string;
   downloads: number;
