@@ -73,8 +73,7 @@ const DatasetProfile: React.FC<{
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   const splits = useMemo(() => {
-    const configInfo = dataset.cardData.dataset_info[0];
-    return configInfo ? configInfo.splits : [];
+    return dataset.cardData.dataset_info?.[0]?.splits ?? [];
   }, [dataset]);
 
   const categorizedTags = useMemo(() => {
@@ -158,7 +157,7 @@ records = ds.records()`;
                 value={
                   Array.isArray(dataset.cardData?.license)
                     ? dataset.cardData.license.join(", ")
-                    : dataset.cardData?.license || "N/A"
+                    : dataset.cardData?.license ?? "N/A"
                 }
               />
               <InfoItem
@@ -166,7 +165,7 @@ records = ds.records()`;
                 value={
                   Array.isArray(dataset.cardData?.language)
                     ? dataset.cardData.language.join(", ")
-                    : dataset.cardData?.language || "N/A"
+                    : dataset.cardData?.language ?? "N/A"
                 }
               />
               {dataset.cardData?.paperswithcode_id && (
@@ -197,7 +196,7 @@ records = ds.records()`;
                 <span>Total Size:</span>
                 <strong>
                   {(
-                    dataset.cardData.dataset_info[0]?.dataset_size /
+                    (dataset.cardData.dataset_info?.[0]?.dataset_size ?? 0) /
                     1024 /
                     1024
                   ).toFixed(2)}{" "}
@@ -208,7 +207,7 @@ records = ds.records()`;
                 <span>Download Size:</span>
                 <strong>
                   {(
-                    dataset.cardData.dataset_info[0]?.download_size /
+                    (dataset.cardData.dataset_info?.[0]?.download_size ?? 0) /
                     1024 /
                     1024
                   ).toFixed(2)}{" "}
@@ -218,10 +217,10 @@ records = ds.records()`;
               <div className="flex justify-between">
                 <span>Number of Splits:</span>
                 <strong>
-                  {dataset.cardData.dataset_info[0]?.splits.length}
+                  {dataset.cardData.dataset_info?.[0]?.splits.length ?? 0}
                 </strong>
               </div>
-              {dataset.cardData.dataset_info[0]?.splits.map((split) => (
+              {dataset.cardData.dataset_info?.[0]?.splits.map((split) => (
                 <div key={split.name} className="flex justify-between">
                   <span>{split.name}:</span>
                   <strong>
