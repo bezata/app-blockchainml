@@ -90,7 +90,7 @@ export default function DatasetCardComponent({ dataset }: DatasetCardProps) {
               ) : (
                 <Badge
                   variant="default"
-                  className="bg-green-100 text-green-800 flex items-center"
+                  className="bg-green-100 hover:text-green-800 hover:bg-green-100 text-green-800 flex items-center"
                 >
                   Free
                 </Badge>

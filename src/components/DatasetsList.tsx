@@ -344,10 +344,25 @@ export default function DatasetsList({ datasets }: { datasets: Dataset[] }) {
               onValueChange={setActiveTab}
               className="w-full md:w-auto"
             >
-              <TabsList>
-                <TabsTrigger value="all">All Datasets</TabsTrigger>
-                <TabsTrigger value="BlockchainML">BlockchainML</TabsTrigger>
-                <TabsTrigger value="HuggingFace">HuggingFace</TabsTrigger>
+              <TabsList className="bg-white border border-gray-200 p-1 rounded-md">
+                <TabsTrigger
+                  value="all"
+                  className="px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 data-[state=active]:bg-green-500 data-[state=active]:text-white"
+                >
+                  All Datasets
+                </TabsTrigger>
+                <TabsTrigger
+                  value="BlockchainML"
+                  className="px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 data-[state=active]:bg-green-500 data-[state=active]:text-white"
+                >
+                  BlockchainML
+                </TabsTrigger>
+                <TabsTrigger
+                  value="HuggingFace"
+                  className="px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 data-[state=active]:bg-green-500 data-[state=active]:text-white"
+                >
+                  HuggingFace
+                </TabsTrigger>
               </TabsList>
             </Tabs>
             <div className="flex flex-col sm:flex-row w-full md:w-auto space-y-2 sm:space-y-0 sm:space-x-2">
