@@ -14,7 +14,7 @@ import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavBar } from "./component/nav-bar";
 
-const API_BASE_URL = "http://localhost:4000/api/v1";
+const API_BASE_URL = "/api/datasets"; // This should point to your backend API
 
 const tagSuggestions = [
   "Machine Learning",
@@ -69,11 +69,11 @@ export function CreateDatasetComponent() {
           name: file.name,
           size: file.size,
           type: file.type,
-          data: fileData,
+          data: JSON.stringify(fileData), // Stringify the file data
         },
       };
 
-      const response = await fetch(`${API_BASE_URL}/datasets`, {
+      const response = await fetch(API_BASE_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -83,7 +83,7 @@ export function CreateDatasetComponent() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(JSON.stringify(errorData));
+        throw new Error(errorData.error || "An unexpected error occurred");
       }
 
       const result = await response.json();

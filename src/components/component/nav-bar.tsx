@@ -36,6 +36,7 @@ import {
   SaveIcon,
 } from "@/components/ui/nav-link";
 
+
 export function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);

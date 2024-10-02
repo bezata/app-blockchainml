@@ -1,7 +1,5 @@
 "use client";
-
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,37 +15,80 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import {
-  AlertCircle,
-  Bell,
-  Globe,
-  Lock,
-  Mail,
-  Smartphone,
-  User,
-} from "lucide-react";
+import { Bell, Globe, Lock, User, RefreshCw } from "lucide-react";
 import { NavBar } from "@/components/component/nav-bar";
+import { useSession } from "next-auth/react";
+interface UserSettings {
+  name: string;
+  email: string;
+  bio: string;
+  avatar: string;
+  language: string;
+  theme: string;
+  notifications: {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+  };
+  privacy: {
+    profileVisibility: string;
+    showEmail: boolean;
+  };
+  twoFactor: boolean;
+  defaultPaymentAddress: string;
+  paymentAddress: string;
+  apiKey: string;
+}
+
+// Initialize with default values
+const defaultUserSettings: UserSettings = {
+  name: "",
+  email: "",
+  bio: "",
+  avatar: "",
+  language: "english",
+  theme: "light",
+  notifications: {
+    email: false,
+    push: false,
+    sms: false,
+  },
+  privacy: {
+    profileVisibility: "public",
+    showEmail: false,
+  },
+  twoFactor: false,
+  defaultPaymentAddress: "",
+  paymentAddress: "",
+  apiKey: "",
+};
 
 export default function UserSettingsPage() {
+  const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState("profile");
-  const [user, setUser] = useState({
-    name: "John Doe",
-    email: "john.doe@example.com",
-    bio: "AI enthusiast and data scientist",
-    avatar: "https://github.com/shadcn.png",
-    language: "english",
-    theme: "light",
-    notifications: {
-      email: true,
-      push: false,
-      sms: false,
-    },
-    privacy: {
-      profileVisibility: "public",
-      showEmail: false,
-    },
-    twoFactor: false,
-  });
+  const [user, setUser] = useState<UserSettings>(defaultUserSettings);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchUserSettings();
+  }, []);
+
+  const fetchUserSettings = async () => {
+    try {
+      const response = await fetch("/api/user-settings");
+      if (!response.ok) {
+        throw new Error("Failed to fetch user settings");
+      }
+      const data = await response.json();
+      setUser({ ...defaultUserSettings, ...data });
+    } catch (error) {
+      setError("An error occurred while fetching user settings");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -75,9 +116,100 @@ export default function UserSettingsPage() {
       },
     }));
   };
+  const handleSave = async () => {
+    try {
+      // Only send mutable fields
+      const mutableFields = {
+        name: user.name,
+        email: user.email,
+        bio: user.bio,
+        avatar: user.avatar,
+        language: user.language,
+        theme: user.theme,
+        notifications: user.notifications,
+        privacy: user.privacy,
+        twoFactor: user.twoFactor,
+        defaultPaymentAddress: user.defaultPaymentAddress,
+        paymentAddress: user.paymentAddress,
+      };
 
-  const handleSave = () => {
-    console.log("Saving user settings:", user);
+      const response = await fetch("/api/user-settings", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(mutableFields),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to update user settings: ${errorText}`);
+      }
+
+      const updatedUser = await response.json();
+      setUser((prevUser) => ({ ...prevUser, ...updatedUser }));
+      console.log("User settings updated successfully");
+    } catch (error) {
+      console.error("Error updating user settings:", error);
+    }
+  };
+
+  const handleRenewApiKey = async () => {
+    if (!session || !session.user?.id) {
+      console.error("User session not available");
+      setError("You must be logged in to renew your API key");
+      return;
+    }
+  
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:4000';
+    const apiUrl = `${backendUrl}/api/v1/user-settings/renew-api-key`;
+  
+    console.log(`Attempting to renew API key at: ${apiUrl}`);
+  
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.user?.id}`,
+        },
+        body: JSON.stringify({}), // Send an empty object
+      });
+  
+      const responseText = await response.text();
+      console.log("Raw response:", responseText);
+  
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          console.error("Failed to parse error response:", e);
+          errorMessage = responseText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+  
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Failed to parse successful response:", e);
+        throw new Error("Invalid response from server");
+      }
+  
+      if (!data.apiKey) {
+        throw new Error("API key not found in response");
+      }
+  
+      setUser((prevUser) => ({ ...prevUser, apiKey: data.apiKey }));
+      console.log("API key renewed successfully");
+      // Show a success message to the user
+    } catch (error) {
+      console.error("Error renewing API key:", error);
+      setError(`Failed to renew API key: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   return (
@@ -208,7 +340,6 @@ export default function UserSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent value="account">
             <Card className="bg-white shadow-sm">
               <CardHeader>
@@ -218,34 +349,52 @@ export default function UserSettingsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="current-password" className="text-gray-700">
-                    Current Password
+                  <Label
+                    htmlFor="default-payment-address"
+                    className="text-gray-700"
+                  >
+                    Default Payment Address
                   </Label>
                   <Input
-                    id="current-password"
-                    type="password"
+                    id="default-payment-address"
+                    name="defaultPaymentAddress"
+                    value={user.defaultPaymentAddress}
+                    onChange={handleInputChange}
                     className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="new-password" className="text-gray-700">
-                    New Password
+                  <Label htmlFor="payment-address" className="text-gray-700">
+                    Payment Address
                   </Label>
                   <Input
-                    id="new-password"
-                    type="password"
+                    id="payment-address"
+                    name="paymentAddress"
+                    value={user.paymentAddress}
+                    onChange={handleInputChange}
                     className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password" className="text-gray-700">
-                    Confirm New Password
+                  <Label htmlFor="api-key" className="text-gray-700">
+                    API Key
                   </Label>
-                  <Input
-                    id="confirm-password"
-                    type="password"
-                    className="border-gray-300 focus:border-green-500 focus:ring-green-500"
-                  />
+                  <div className="flex space-x-2">
+                    <Input
+                      id="api-key"
+                      name="apiKey"
+                      value={user.apiKey}
+                      readOnly
+                      className="border-gray-300 focus:border-green-500 focus:ring-green-500 flex-grow"
+                    />
+                    <Button
+                      onClick={handleRenewApiKey}
+                      className="bg-green-500 hover:bg-green-600 text-white"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Renew
+                    </Button>
+                  </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch
@@ -266,7 +415,6 @@ export default function UserSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent value="notifications">
             <Card className="bg-white shadow-sm">
               <CardHeader>

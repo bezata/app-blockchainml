@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import {
   type SIWESession,
@@ -39,7 +39,7 @@ if (!backendApiUrl) {
   throw new Error("BACKEND_API_URL is not set");
 }
 
-export default NextAuth({
+export const authOptions: NextAuthOptions = {
   secret: nextAuthSecret,
   providers: [
     CredentialsProvider({
@@ -137,4 +137,6 @@ export default NextAuth({
   pages: {
     error: "/auth/error", // Error page to redirect to
   },
-});
+};
+
+export default NextAuth(authOptions);
