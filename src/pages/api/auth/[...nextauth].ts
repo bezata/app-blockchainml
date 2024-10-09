@@ -1,28 +1,5 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth, { NextAuthOptions, Session, User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import {
-  type SIWESession,
-  verifySignature,
-  getChainIdFromMessage,
-  getAddressFromMessage,
-} from "@reown/appkit-siwe";
-import { DefaultUser } from "next-auth";
-
-declare module "next-auth" {
-  interface User extends DefaultUser {
-    ethAddress: string;
-    chainId: number;
-  }
-
-  interface Session extends SIWESession {
-    address: string;
-    chainId: number;
-    user: {
-      id: string;
-      ethAddress: string;
-    };
-  }
-}
 
 const nextAuthSecret = process.env.NEXTAUTH_SECRET;
 if (!nextAuthSecret) {
@@ -39,6 +16,23 @@ if (!backendApiUrl) {
   throw new Error("BACKEND_API_URL is not set");
 }
 
+interface ExtendedUser extends User {
+  ethAddress: string;
+  chainId: number;
+  apiKey: string;
+  accessToken: string;
+}
+
+interface CustomSession extends Session {
+  user: {
+    id: string;
+    ethAddress: string;
+    chainId: string | null;
+    apiKey: string;
+  };
+  accessToken: string;
+}
+
 export const authOptions: NextAuthOptions = {
   secret: nextAuthSecret,
   providers: [
@@ -48,67 +42,48 @@ export const authOptions: NextAuthOptions = {
         message: {
           label: "Message",
           type: "text",
-          placeholder: "0x0",
         },
         signature: {
           label: "Signature",
           type: "text",
-          placeholder: "0x0",
         },
       },
       async authorize(credentials) {
         try {
-          if (!credentials?.message) {
-            throw new Error("SIWEMessage is undefined");
+          if (!credentials?.message || !credentials?.signature) {
+            throw new Error("Missing message or signature");
           }
           const { message, signature } = credentials;
-          const address = getAddressFromMessage(message);
-          const chainId = getChainIdFromMessage(message);
 
-          const isValid = await verifySignature({
-            address,
-            message,
-            signature,
-            chainId,
-            projectId,
+          const response = await fetch(`${backendApiUrl}/api/v1/auth/login`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ message, signature }),
           });
 
-          if (isValid) {
-            console.log(`Signature verified for address: ${address}`);
-            const response = await fetch(`${backendApiUrl}/api/v1/users/auth`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                ethAddress: address,
-                chainId: `eip155:${chainId}`,
-              }),
-            });
-
-            if (!response.ok) {
-              const errorText = await response.text();
-              console.error(`Backend authentication failed: ${errorText}`);
-              throw new Error(
-                `Failed to authenticate with backend: ${errorText}`
-              );
-            }
-
-            const user = await response.json();
-            console.log(`User authenticated: ${JSON.stringify(user)}`);
-
-            return {
-              id: user.id,
-              ethAddress: user.walletAddress,
-              chainId: parseInt(user.chainId),
-            };
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Backend authentication failed: ${errorText}`);
+            throw new Error(
+              `Failed to authenticate with backend: ${errorText}`
+            );
           }
 
-          console.log(`Invalid signature for address: ${address}`);
-          return null;
+          const { user, token } = await response.json();
+          console.log(`User authenticated: ${JSON.stringify(user)}`);
+
+          return {
+            id: user.id,
+            ethAddress: user.ethAddress,
+            chainId: user.chainId ?? null,
+            apiKey: user.apiKey,
+            accessToken: token,
+          };
         } catch (e) {
           console.error("Authorization error:", e);
-          throw e; // Rethrow the error to be caught by NextAuth
+          return null;
         }
       },
     }),
@@ -116,26 +91,34 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.sub = user.id;
-        token.ethAddress = user.ethAddress;
-        token.chainId = user.chainId;
+        const extendedUser = user as ExtendedUser;
+        token.id = extendedUser.id;
+        token.ethAddress = extendedUser.ethAddress;
+        token.chainId = extendedUser.chainId ?? null;
+        token.apiKey = extendedUser.apiKey;
+        token.accessToken = extendedUser.accessToken;
       }
       return token;
     },
-    async session({ session, token }) {
-      if (token && token.sub) {
-        session.user = {
-          id: token.sub,
+    async session({ session, token }): Promise<CustomSession> {
+      return {
+        ...session,
+        user: {
+          id: token.id as string,
           ethAddress: token.ethAddress as string,
-        };
-        session.address = token.ethAddress as string;
-        session.chainId = token.chainId as number;
-      }
-      return session;
+          chainId: (token.chainId as string) ?? null,
+          apiKey: token.apiKey as string,
+        },
+        accessToken: token.accessToken as string,
+      };
     },
   },
   pages: {
-    error: "/auth/error", // Error page to redirect to
+    signIn: "/auth/signin",
+    error: "/auth/error",
+  },
+  session: {
+    strategy: "jwt",
   },
 };
 

@@ -35,7 +35,7 @@ import {
   ViewIcon,
   SaveIcon,
 } from "@/components/ui/nav-link";
-
+import { useSession } from "next-auth/react";
 
 export function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -48,6 +48,8 @@ export function NavBar() {
   const { open } = useAppKit();
   const { address } = useAccount();
   const router = useRouter();
+  const { data: session } = useSession();
+  console.log(session);
 
   useEffect(() => {
     setIsClient(true);
@@ -121,7 +123,7 @@ export function NavBar() {
             />
             <NavLinks href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
             <NavLinks href="/models" icon={<ViewIcon />} text="Models" />{" "}
-            <NavLinks href="/chat" icon={<MessageCircleCode />} text="Forum" />
+            <NavLinks href="/forum" icon={<MessageCircleCode />} text="Forum" />
             <NavLinks href="/monetization" icon={<DollarSign />} text="Earn" />
             <NavLinks
               href="/savedItems"
@@ -240,7 +242,7 @@ export function NavBar() {
             />
             <NavLinks href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
             <NavLinks href="/models" icon={<ViewIcon />} text="Models" />{" "}
-            <NavLinks href="/chat" icon={<MessageCircleCode />} text="Chat" />
+            <NavLinks href="/forum" icon={<MessageCircleCode />} text="forum" />
             <NavLinks href="/monetization" icon={<DollarSign />} text="Earn" />
             <NavLinks
               href="/savedItems"

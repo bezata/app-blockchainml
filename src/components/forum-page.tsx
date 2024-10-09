@@ -1,19 +1,14 @@
-"use client";
-
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useRouter } from "next/router";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   MessageCircle,
   ThumbsUp,
@@ -24,160 +19,258 @@ import {
   Calendar,
 } from "lucide-react";
 import { NavBar } from "@/components/component/nav-bar";
+import { GetServerSideProps } from "next";
+import { getSession, useSession } from "next-auth/react";
+import { Session } from "next-auth";
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api/v1";
+const WS_URL =
+  process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:4000/api/v1/forum/live";
+
+interface Author {
+  id: string;
+  name: string;
+  avatar: string;
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  author: Author;
+  createdAt: string;
+  likes: number;
+}
 
 interface Post {
-  id: number;
+  id: string;
   title: string;
   content: string;
-  author: string;
-  avatar: string;
-  date: string;
+  author: Author;
+  createdAt: string;
   likes: number;
   comments: Comment[];
   category: string;
 }
 
-interface Comment {
-  id: number;
-  author: string;
-  avatar: string;
-  content: string;
-  date: string;
-  likes: number;
+export interface SIWESession extends Session {
+  user: {
+    id: string;
+    ethAddress: string;
+    apiKey: string;
+  };
+  accessToken: string;
 }
 
-export default function ForumPageComponent() {
+interface ForumPageProps {
+  initialPosts: Post[];
+  session: SIWESession;
+}
+
+export default function ForumPage({
+  initialPosts,
+  session: initialSession,
+}: ForumPageProps) {
+  const router = useRouter();
+  const { data: sessionData, status } = useSession();
+  const [session, setSession] = useState<SIWESession | null>(initialSession);
+  const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [posts, setPosts] = useState<Post[]>([
-    {
-      id: 1,
-      title: "Best practices for dataset labeling?",
-      content:
-        "I'm working on a large image classification project and I'm wondering what are some best practices for efficient and accurate dataset labeling. Any tips or tools you'd recommend?",
-      author: "Alice Johnson",
-      avatar: "https://i.pravatar.cc/150?img=1",
-      date: "2023-06-10",
-      likes: 15,
-      comments: [
-        {
-          id: 1,
-          author: "Bob Smith",
-          avatar: "https://i.pravatar.cc/150?img=2",
-          content:
-            "Great question! I've found that using a tool like LabelBox can significantly speed up the process.",
-          date: "2023-06-11",
-          likes: 3,
-        },
-        {
-          id: 2,
-          author: "Charlie Brown",
-          avatar: "https://i.pravatar.cc/150?img=3",
-          content:
-            "In my experience, the best approach is to have a clear labeling guide and to use a team of domain experts.",
-          date: "2023-06-12",
-          likes: 5,
-        },
-      ],
-      category: "Data Preparation",
-    },
-    {
-      id: 2,
-      title: "Optimizing transformer models for inference",
-      content:
-        "I've trained a large transformer model for NLP tasks, but inference time is quite slow. What are some strategies for optimizing transformer models for faster inference without significant loss in accuracy?",
-      author: "Bob Smith",
-      avatar: "https://i.pravatar.cc/150?img=2",
-      date: "2023-06-09",
-      likes: 23,
-      comments: [
-        {
-          id: 3,
-          author: "Alice Johnson",
-          avatar: "https://i.pravatar.cc/150?img=1",
-          content:
-            "Have you tried quantization? It can significantly reduce model size and improve inference speed.",
-          date: "2023-06-10",
-          likes: 7,
-        },
-      ],
-      category: "Model Optimization",
-    },
-    {
-      id: 3,
-      title: "Handling imbalanced datasets in machine learning",
-      content:
-        "I'm working with a highly imbalanced dataset for a binary classification problem. What are some effective techniques to handle this imbalance and improve model performance?",
-      author: "Charlie Brown",
-      avatar: "https://i.pravatar.cc/150?img=3",
-      date: "2023-06-08",
-      likes: 18,
-      comments: [],
-      category: "Machine Learning",
-    },
-  ]);
-  const [newPost, setNewPost] = useState({ title: "", content: "" });
+  const [newPost, setNewPost] = useState({
+    title: "",
+    content: "",
+    category: "General",
+  });
   const [showNewPostForm, setShowNewPostForm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [ws, setWs] = useState<WebSocket | null>(null);
 
-  const handleNewPost = (e: React.FormEvent) => {
-    e.preventDefault();
-    const post: Post = {
-      id: posts.length + 1,
-      ...newPost,
-      author: "Current User",
-      avatar: "https://i.pravatar.cc/150?img=4",
-      date: new Date().toISOString().split("T")[0],
-      likes: 0,
-      comments: [],
-      category: "General",
-    };
-    setPosts([post, ...posts]);
-    setNewPost({ title: "", content: "" });
-    setShowNewPostForm(false);
-  };
+  useEffect(() => {
+    if (sessionData) {
+      setSession(sessionData as SIWESession);
+    }
+  }, [sessionData]);
 
-  const handleLike = (postId: number) => {
-    setPosts(
-      posts.map((post) =>
-        post.id === postId ? { ...post, likes: post.likes + 1 } : post
-      )
-    );
-  };
+  useEffect(() => {
+    console.log("ForumPage - Session status:", status);
+    console.log("ForumPage - Session data:", session);
+    console.log("ForumPage - Initial Session data:", initialSession);
+  }, [session, status, initialSession]);
 
-  const handleComment = (postId: number, newComment: string) => {
-    setPosts(
-      posts.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              comments: [
-                ...post.comments,
-                {
-                  id: post.comments.length + 1,
-                  author: "Current User",
-                  avatar: "https://i.pravatar.cc/150?img=4",
-                  content: newComment,
-                  date: new Date().toISOString().split("T")[0],
-                  likes: 0,
-                },
-              ],
-            }
-          : post
-      )
-    );
-  };
+  const fetchPosts = useCallback(
+    async (category?: string) => {
+      if (!session?.accessToken) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const url =
+          category && category !== "all"
+            ? `${API_BASE_URL}/forum/posts/category/${category}`
+            : `${API_BASE_URL}/forum/posts`;
 
-  const filteredPosts = posts.filter(
-    (post) =>
-      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.content.toLowerCase().includes(searchTerm.toLowerCase())
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${session.accessToken}`,
+          },
+        });
+        if (!response.ok) throw new Error("Failed to fetch posts");
+        const data = await response.json();
+        setPosts(data);
+      } catch (error) {
+        setError("Failed to fetch posts. Please try again later.");
+        console.error("Error fetching posts:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [session]
   );
+
+  useEffect(() => {
+    if (session?.accessToken) {
+      fetchPosts();
+      if (!ws) {
+        const newWs = new WebSocket(WS_URL);
+        setWs(newWs);
+
+        return () => {
+          newWs.close();
+        };
+      }
+    }
+  }, [session, fetchPosts, ws]);
+
+  const handleNewPost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session?.accessToken) return;
+    setError(null);
+
+    if (!newPost.title || !newPost.content) {
+      setError("Please provide both title and content for the post.");
+      return;
+    }
+
+    try {
+      const payload = {
+        ...newPost,
+        userId: session.user.id,
+      };
+      console.log("Request payload:", payload);
+
+      const response = await fetch(`${API_BASE_URL}/forum/posts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const createdPost = await response.json();
+      setPosts((prevPosts) => [createdPost, ...prevPosts]);
+      setNewPost({
+        title: "",
+        content: "",
+        category: "General",
+      });
+      setShowNewPostForm(false);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      setError(`Failed to create post: ${errorMessage}`);
+      console.error("Error creating post:", error);
+    }
+  };
+
+  const handleLike = async (postId: string) => {
+    if (!session?.accessToken) return;
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/forum/posts/${postId}/like`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.accessToken}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to like post");
+      }
+      const updatedPost = await response.json();
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === postId ? { ...post, likes: updatedPost.likes } : post
+        )
+      );
+    } catch (error) {
+      console.error("Error liking post:", error);
+      setError(
+        `Failed to like post: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  };
+
+  const handleComment = async (postId: string, newComment: string) => {
+    if (!session?.accessToken) return;
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/forum/posts/${postId}/comments`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.accessToken}`,
+          },
+          body: JSON.stringify({ content: newComment }),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to add comment");
+      }
+      // The WebSocket will handle updating the posts state
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      setError(
+        `Failed to add comment: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  };
+  const filteredPosts = useMemo(() => {
+    return posts.filter(
+      (post) =>
+        post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        post.content.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [posts, searchTerm]);
+
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
+
+  if (!session && status === "unauthenticated") {
+    router.push("/auth/signin");
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 font-sans">
-      <header className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
-        <NavBar />
-      </header>
+      <NavBar />
 
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
@@ -204,56 +297,21 @@ export default function ForumPageComponent() {
           </div>
         </div>
 
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
         <AnimatePresence>
           {showNewPostForm && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Card className="mb-6 bg-white">
-                <CardHeader>
-                  <CardTitle>Create New Post</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleNewPost} className="space-y-4">
-                    <Input
-                      placeholder="Post Title"
-                      value={newPost.title}
-                      onChange={(e) =>
-                        setNewPost({ ...newPost, title: e.target.value })
-                      }
-                      required
-                    />
-                    <Textarea
-                      placeholder="Post Content"
-                      value={newPost.content}
-                      onChange={(e) =>
-                        setNewPost({ ...newPost, content: e.target.value })
-                      }
-                      required
-                      rows={4}
-                    />
-                    <div className="flex justify-end space-x-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setShowNewPostForm(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        className="bg-green-500 hover:bg-green-600 text-white"
-                      >
-                        Post
-                      </Button>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
-            </motion.div>
+            <NewPostForm
+              newPost={newPost}
+              setNewPost={setNewPost}
+              handleNewPost={handleNewPost}
+              setShowNewPostForm={setShowNewPostForm}
+            />
           )}
         </AnimatePresence>
 
@@ -263,61 +321,138 @@ export default function ForumPageComponent() {
           className="space-y-4"
         >
           <TabsList className="bg-white rounded-lg p-1 shadow-sm">
-            <TabsTrigger
-              value="all"
-              className="data-[state=active]:bg-green-500 data-[state=active]:text-white rounded-md px-4 py-2 transition-colors duration-200"
-            >
-              All Posts
-            </TabsTrigger>
-            <TabsTrigger
-              value="data"
-              className="data-[state=active]:bg-green-500 data-[state=active]:text-white rounded-md px-4 py-2 transition-colors duration-200"
-            >
-              Data Preparation
-            </TabsTrigger>
-            <TabsTrigger
-              value="model"
-              className="data-[state=active]:bg-green-500 data-[state=active]:text-white rounded-md px-4 py-2 transition-colors duration-200"
-            >
-              Model Optimization
-            </TabsTrigger>
-            <TabsTrigger
-              value="ml"
-              className="data-[state=active]:bg-green-500 data-[state=active]:text-white rounded-md px-4 py-2 transition-colors duration-200"
-            >
-              Machine Learning
-            </TabsTrigger>
+            <TabsTrigger value="all">All Posts</TabsTrigger>
+            <TabsTrigger value="data">Data Preparation</TabsTrigger>
+            <TabsTrigger value="model">Model Optimization</TabsTrigger>
+            <TabsTrigger value="ml">Machine Learning</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="all">
-            {filteredPosts.map((post) => (
-              <ForumPost
-                key={post.id}
-                post={post}
-                onLike={handleLike}
-                onComment={handleComment}
-              />
-            ))}
-          </TabsContent>
-
-          {["data", "model", "ml"].map((category) => (
-            <TabsContent key={category} value={category}>
-              {filteredPosts
-                .filter((post) =>
-                  post.category.toLowerCase().includes(category)
-                )
-                .map((post) => (
-                  <ForumPost
-                    key={post.id}
-                    post={post}
+          {isLoading ? (
+            <div className="text-center py-8">Loading posts...</div>
+          ) : (
+            <>
+              <TabsContent value="all">
+                <PostList
+                  posts={filteredPosts}
+                  onLike={handleLike}
+                  onComment={handleComment}
+                />
+              </TabsContent>
+              {["data", "model", "ml"].map((category) => (
+                <TabsContent key={category} value={category}>
+                  <PostList
+                    posts={(filteredPosts ?? []).filter(
+                      (post) => post.category.toLowerCase() === category
+                    )}
                     onLike={handleLike}
                     onComment={handleComment}
                   />
-                ))}
-            </TabsContent>
-          ))}
+                </TabsContent>
+              ))}
+            </>
+          )}
         </Tabs>
       </main>
+    </div>
+  );
+}
+
+function NewPostForm({
+  newPost,
+  setNewPost,
+  handleNewPost,
+  setShowNewPostForm,
+}: {
+  newPost: { title: string; content: string; category: string };
+  setNewPost: React.Dispatch<
+    React.SetStateAction<{ title: string; content: string; category: string }>
+  >;
+  handleNewPost: (e: React.FormEvent) => void;
+  setShowNewPostForm: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card className="mb-6 bg-white">
+        <CardHeader>
+          <CardTitle>Create New Post</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleNewPost} className="space-y-4">
+            <Input
+              placeholder="Post Title"
+              value={newPost.title}
+              onChange={(e) =>
+                setNewPost({ ...newPost, title: e.target.value })
+              }
+              required
+            />
+            <Textarea
+              placeholder="Post Content"
+              value={newPost.content}
+              onChange={(e) =>
+                setNewPost({ ...newPost, content: e.target.value })
+              }
+              required
+              rows={4}
+            />
+            <select
+              value={newPost.category}
+              onChange={(e) =>
+                setNewPost({ ...newPost, category: e.target.value })
+              }
+              className="w-full p-2 border rounded"
+            >
+              <option value="General">General</option>
+              <option value="Data Preparation">Data Preparation</option>
+              <option value="Model Optimization">Model Optimization</option>
+              <option value="Machine Learning">Machine Learning</option>
+            </select>
+            <div className="flex justify-end space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowNewPostForm(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-green-500 hover:bg-green-600 text-white"
+              >
+                Post
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
+function PostList({
+  posts,
+  onLike,
+  onComment,
+}: {
+  posts: Post[];
+  onLike: (postId: string) => void;
+  onComment: (postId: string, comment: string) => void;
+}) {
+  return (
+    <div className="space-y-6">
+      {posts?.map((post: Post) => (
+        <ForumPost
+          key={post.id}
+          post={post}
+          onLike={onLike}
+          onComment={onComment}
+        />
+      ))}
     </div>
   );
 }
@@ -328,8 +463,8 @@ function ForumPost({
   onComment,
 }: {
   post: Post;
-  onLike: (postId: number) => void;
-  onComment: (postId: number, comment: string) => void;
+  onLike: (postId: string) => void;
+  onComment: (postId: string, comment: string) => void;
 }) {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
@@ -345,23 +480,18 @@ function ForumPost({
       <CardHeader>
         <div className="flex items-center space-x-4">
           <Avatar>
-            <AvatarImage src={post.avatar} alt={post.author} />
-            <AvatarFallback>
-              {post.author
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
-            </AvatarFallback>
+            <AvatarImage src={post.author.avatar} alt={post.author.name} />
+            <AvatarFallback>{post.author.name[0]}</AvatarFallback>
           </Avatar>
           <div>
             <CardTitle className="text-xl font-semibold">
               {post.title}
             </CardTitle>
             <p className="text-sm text-gray-500 flex items-center">
-              <span>{post.author}</span>
+              <span>{post.author.name}</span>
               <span className="mx-2">•</span>
               <Calendar className="w-4 h-4 mr-1" />
-              <span>{post.date}</span>
+              <span>{new Date(post.createdAt).toLocaleDateString()}</span>
             </p>
           </div>
         </div>
@@ -415,32 +545,7 @@ function ForumPost({
               <h3 className="font-semibold mb-4">Comments</h3>
               <div className="space-y-4 mb-4">
                 {post.comments.map((comment) => (
-                  <div
-                    key={comment.id}
-                    className="flex items-start space-x-2 bg-gray-50 p-3 rounded-lg"
-                  >
-                    <Avatar className="w-8 h-8">
-                      <AvatarImage src={comment.avatar} alt={comment.author} />
-                      <AvatarFallback>{comment.author[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium">{comment.author}</p>
-                        <p className="text-xs text-gray-500">{comment.date}</p>
-                      </div>
-                      <p className="text-sm text-gray-700 mt-1">
-                        {comment.content}
-                      </p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-gray-500 hover:text-green-600 mt-1"
-                      >
-                        <ThumbsUp className="w-3 h-3 mr-1" />
-                        {comment.likes}
-                      </Button>
-                    </div>
-                  </div>
+                  <CommentItem key={comment.id} comment={comment} />
                 ))}
               </div>
               <form
@@ -457,6 +562,7 @@ function ForumPost({
                   type="submit"
                   size="sm"
                   className="bg-green-500 hover:bg-green-600 text-white"
+                  disabled={!newComment.trim()}
                 >
                   <Send className="w-4 h-4" />
                 </Button>
@@ -466,5 +572,33 @@ function ForumPost({
         )}
       </AnimatePresence>
     </Card>
+  );
+}
+
+function CommentItem({ comment }: { comment: Comment }) {
+  return (
+    <div className="flex items-start space-x-2 bg-gray-50 p-3 rounded-lg">
+      <Avatar className="w-8 h-8">
+        <AvatarImage src={comment.author.avatar} alt={comment.author.name} />
+        <AvatarFallback>{comment.author.name[0]}</AvatarFallback>
+      </Avatar>
+      <div className="flex-1">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium">{comment.author.name}</p>
+          <p className="text-xs text-gray-500">
+            {new Date(comment.createdAt).toLocaleString()}
+          </p>
+        </div>
+        <p className="text-sm text-gray-700 mt-1">{comment.content}</p>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-gray-500 hover:text-green-600 mt-1"
+        >
+          <ThumbsUp className="w-3 h-3 mr-1" />
+          {comment.likes}
+        </Button>
+      </div>
+    </div>
   );
 }

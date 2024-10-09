@@ -5,14 +5,14 @@ import type {
   SIWESession,
 } from "@reown/appkit-siwe";
 import { createSIWEConfig, formatMessage } from "@reown/appkit-siwe";
-import { polygon } from "@reown/appkit/networks";
+import { mainnet, sepolia } from "@reown/appkit/networks";
 
 export const siweConfig = createSIWEConfig({
-  // @ts-expect-error: i don't know
+  // @ts-expect-error: window is not defined in server side
   getMessageParams: async () => ({
     domain: typeof window !== "undefined" ? window.location.host : "",
     uri: typeof window !== "undefined" ? window.location.origin : "",
-    chains: [polygon.id],
+    chains: [mainnet.id, sepolia.id],
     statement: "Please sign with your account",
   }),
   createMessage: ({ address, ...args }: SIWECreateMessageArgs) =>

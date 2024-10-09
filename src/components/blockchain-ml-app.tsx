@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NavBar } from "./component/nav-bar";
 import { DatasetCard } from "@/components/ui/dataset-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BrainCircuit, Download, Users, Search, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSession } from "next-auth/react";
+import { SIWESession } from "@reown/appkit-siwe";
 import {
   LineChart,
   Line,
@@ -96,6 +98,11 @@ export default function BlockchainMLApp() {
   const [visibleDatasets, setVisibleDatasets] = useState(6);
   const [email, setEmail] = useState("");
 
+  const { data: session, status } = useSession() as {
+    data: SIWESession | null;
+    status: "loading" | "authenticated" | "unauthenticated";
+  };
+
   const filteredDatasets = datasets.filter(
     (dataset) =>
       dataset.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -112,7 +119,7 @@ export default function BlockchainMLApp() {
     console.log(`Subscribed with email: ${email}`);
     setEmail("");
   };
-
+  console.log("BlockchainMLApp - Session status:", session);
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 text-gray-800 font-sans">
       <header className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
@@ -125,9 +132,7 @@ export default function BlockchainMLApp() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="text-3xl font-light mb-8"
-        >
-
-        </motion.h1>
+        ></motion.h1>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {[
