@@ -8,7 +8,7 @@ import { createSIWEConfig, formatMessage } from "@reown/appkit-siwe";
 import { mainnet, sepolia } from "@reown/appkit/networks";
 
 export const siweConfig = createSIWEConfig({
-  // @ts-expect-error: window is not defined in server side
+  //@ts-expect-error: window is not defined in server side
   getMessageParams: async () => ({
     domain: typeof window !== "undefined" ? window.location.host : "",
     uri: typeof window !== "undefined" ? window.location.origin : "",
@@ -37,15 +37,19 @@ export const siweConfig = createSIWEConfig({
   },
   verifyMessage: async ({ message, signature }: SIWEVerifyMessageArgs) => {
     try {
-      const success = await signIn("credentials", {
+      const response = await signIn("credentials", {
         message,
-        redirect: false,
         signature,
+        redirect: false,
         callbackUrl: "/protected",
       });
-
-      return Boolean(success?.ok);
+      if (response?.error) {
+        console.error("Sign-in error:", response.error);
+        return false;
+      }
+      return response?.ok || false;
     } catch (error) {
+      console.error("Verification error:", error);
       return false;
     }
   },
@@ -54,9 +58,9 @@ export const siweConfig = createSIWEConfig({
       await signOut({
         redirect: false,
       });
-
       return true;
     } catch (error) {
+      console.error("Sign-out error:", error);
       return false;
     }
   },
