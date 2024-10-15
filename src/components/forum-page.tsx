@@ -23,10 +23,8 @@ import { GetServerSideProps } from "next";
 import { getSession, useSession } from "next-auth/react";
 import { Session } from "next-auth";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api/v1";
 const WS_URL =
-  process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:4000/api/v1/forum/live";
+  process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:4001/api/v1/forum/live";
 
 interface Author {
   id: string;
@@ -56,7 +54,7 @@ interface Post {
 export interface SIWESession extends Session {
   user: {
     id: string;
-    ethAddress: string;
+    walletAddress: string;
     apiKey: string;
   };
   accessToken: string;
@@ -94,10 +92,10 @@ export default function ForumPage({
   }, [sessionData]);
 
   useEffect(() => {
-    console.log("ForumPage - Session status:", status);
-    console.log("ForumPage - Session data:", session);
-    console.log("ForumPage - Initial Session data:", initialSession);
-  }, [session, status, initialSession]);
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
+    }
+  }, [status, router]);
 
   const fetchPosts = useCallback(
     async (category?: string) => {
@@ -105,12 +103,12 @@ export default function ForumPage({
       setIsLoading(true);
       setError(null);
       try {
-        const url =
-          category && category !== "all"
-            ? `${API_BASE_URL}/forum/posts/category/${category}`
-            : `${API_BASE_URL}/forum/posts`;
+        const url = new URL("/api/forum/getPosts", window.location.origin);
+        if (category && category !== "all") {
+          url.searchParams.append("category", category);
+        }
 
-        const response = await fetch(url, {
+        const response = await fetch(url.toString(), {
           headers: {
             Authorization: `Bearer ${session.accessToken}`,
           },
@@ -130,7 +128,7 @@ export default function ForumPage({
 
   useEffect(() => {
     if (session?.accessToken) {
-      fetchPosts();
+      fetchPosts(activeTab);
       if (!ws) {
         const newWs = new WebSocket(WS_URL);
         setWs(newWs);
@@ -140,12 +138,17 @@ export default function ForumPage({
         };
       }
     }
-  }, [session, fetchPosts, ws]);
+  }, [session, fetchPosts, activeTab, ws]);
 
   const handleNewPost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session?.accessToken) return;
     setError(null);
+
+    if (!session?.accessToken) {
+      console.error("No access token available");
+      setError("You must be logged in to create a post.");
+      return;
+    }
 
     if (!newPost.title || !newPost.content) {
       setError("Please provide both title and content for the post.");
@@ -153,30 +156,28 @@ export default function ForumPage({
     }
 
     try {
-      const payload = {
-        ...newPost,
-        userId: session.user.id,
-      };
-      console.log("Request payload:", payload);
+      console.log("Sending new post data:", newPost);
+      console.log("Current session:", session);
 
-      const response = await fetch(`${API_BASE_URL}/forum/posts`, {
+      const response = await fetch("/api/forum/createPost", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.accessToken}`,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(newPost),
+        credentials: "include", // Add this line
       });
 
+      console.log("Response status:", response.status);
+
+      const data = await response.json();
+      console.log("Response data:", data);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.error || `HTTP error! status: ${response.status}`
-        );
+        throw new Error(data.error || `HTTP error! status: ${response.status}`);
       }
 
-      const createdPost = await response.json();
-      setPosts((prevPosts) => [createdPost, ...prevPosts]);
+      setPosts((prevPosts) => [data.post, ...prevPosts]);
       setNewPost({
         title: "",
         content: "",
@@ -190,19 +191,12 @@ export default function ForumPage({
       console.error("Error creating post:", error);
     }
   };
-
   const handleLike = async (postId: string) => {
     if (!session?.accessToken) return;
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/forum/posts/${postId}/like`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.accessToken}`,
-          },
-        }
-      );
+      const response = await fetch(`/api/forum/likePost?postId=${postId}`, {
+        method: "POST",
+      });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to like post");
@@ -226,17 +220,13 @@ export default function ForumPage({
   const handleComment = async (postId: string, newComment: string) => {
     if (!session?.accessToken) return;
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/forum/posts/${postId}/comments`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.accessToken}`,
-          },
-          body: JSON.stringify({ content: newComment }),
-        }
-      );
+      const response = await fetch(`/api/forum/addComment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ postId, content: newComment }),
+      });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to add comment");
@@ -251,6 +241,7 @@ export default function ForumPage({
       );
     }
   };
+
   const filteredPosts = useMemo(() => {
     return posts.filter(
       (post) =>

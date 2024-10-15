@@ -4,6 +4,7 @@ import React from "react";
 import ContextProvider from "@/context/wagmiContext";
 import { SessionProvider } from "next-auth/react";
 import { parseCookies } from "nookies";
+import { CookieProvider } from "@/context/sessionProvider";
 
 export default function App({ Component, pageProps }: AppProps) {
   const cookies = parseCookies();
@@ -11,7 +12,9 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <ContextProvider cookies={JSON.stringify(cookies)}>
       <SessionProvider>
-        <Component {...pageProps} />
+        <CookieProvider>
+          <Component {...pageProps} />
+        </CookieProvider>
       </SessionProvider>
     </ContextProvider>
   );

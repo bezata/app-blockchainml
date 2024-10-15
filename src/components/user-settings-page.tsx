@@ -1,5 +1,11 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import {
+  updateUserSettings,
+  fetchUserSettings,
+} from "@/pages/api/user/userSettings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,37 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Bell, Globe, Lock, User, RefreshCw } from "lucide-react";
 import { NavBar } from "@/components/component/nav-bar";
-import { useSession } from "next-auth/react";
-interface UserSettings {
-  name: string;
-  email: string;
-  bio: string;
-  avatar: string;
-  language: string;
-  theme: string;
-  notifications: {
-    email: boolean;
-    push: boolean;
-    sms: boolean;
-  };
-  privacy: {
-    profileVisibility: string;
-    showEmail: boolean;
-  };
-  twoFactor: boolean;
-  defaultPaymentAddress: string;
-  paymentAddress: string;
-  apiKey: string;
-}
 
-// Initialize with default values
 const defaultUserSettings: UserSettings = {
+  walletAddress: "",
   name: "",
   email: "",
   bio: "",
@@ -66,29 +49,28 @@ const defaultUserSettings: UserSettings = {
 export default function UserSettingsPage() {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState("profile");
-  const [user, setUser] = useState<UserSettings>(defaultUserSettings);
+  const [user, setUser] = useState<UserSettings>({} as UserSettings);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchUserSettings();
-  }, []);
-
-  const fetchUserSettings = async () => {
-    try {
-      const response = await fetch("/api/user-settings");
-      if (!response.ok) {
-        throw new Error("Failed to fetch user settings");
+    const loadUserSettings = async () => {
+      if (session?.address) {
+        try {
+          const data = await fetchUserSettings(session.address);
+          setUser(data);
+        } catch (error) {
+          setError("An error occurred while fetching user settings");
+          console.error(error);
+        } finally {
+          setLoading(false);
+        }
       }
-      const data = await response.json();
-      setUser({ ...defaultUserSettings, ...data });
-    } catch (error) {
-      setError("An error occurred while fetching user settings");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    loadUserSettings();
+  }, [session?.address]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -116,101 +98,56 @@ export default function UserSettingsPage() {
       },
     }));
   };
+
   const handleSave = async () => {
+    if (!session?.address) {
+      setError("You must be logged in to update settings");
+      return;
+    }
+
     try {
-      // Only send mutable fields
-      const mutableFields = {
-        name: user.name,
-        email: user.email,
-        bio: user.bio,
-        avatar: user.avatar,
-        language: user.language,
-        theme: user.theme,
-        notifications: user.notifications,
-        privacy: user.privacy,
-        twoFactor: user.twoFactor,
-        defaultPaymentAddress: user.defaultPaymentAddress,
-        paymentAddress: user.paymentAddress,
-      };
-
-      const response = await fetch("/api/user-settings", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(mutableFields),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to update user settings: ${errorText}`);
-      }
-
-      const updatedUser = await response.json();
-      setUser((prevUser) => ({ ...prevUser, ...updatedUser }));
-      console.log("User settings updated successfully");
+      const updatedUser = await updateUserSettings(session.address, user);
+      setUser(updatedUser);
+      setSuccessMessage("User settings updated successfully");
+      setError(null);
     } catch (error) {
       console.error("Error updating user settings:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to update user settings"
+      );
+      setSuccessMessage(null);
     }
   };
 
   const handleRenewApiKey = async () => {
-    if (!session || !session.user?.id) {
-      console.error("User session not available");
+    if (!session?.address) {
       setError("You must be logged in to renew your API key");
       return;
     }
-  
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:4000';
-    const apiUrl = `${backendUrl}/api/v1/user-settings/renew-api-key`;
-  
-    console.log(`Attempting to renew API key at: ${apiUrl}`);
-  
+
     try {
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.user?.id}`,
-        },
-        body: JSON.stringify({}), // Send an empty object
-      });
-  
-      const responseText = await response.text();
-      console.log("Raw response:", responseText);
-  
-      if (!response.ok) {
-        let errorMessage = `HTTP error! status: ${response.status}`;
-        try {
-          const errorData = JSON.parse(responseText);
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          console.error("Failed to parse error response:", e);
-          errorMessage = responseText || errorMessage;
-        }
-        throw new Error(errorMessage);
-      }
-  
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (e) {
-        console.error("Failed to parse successful response:", e);
-        throw new Error("Invalid response from server");
-      }
-  
-      if (!data.apiKey) {
-        throw new Error("API key not found in response");
-      }
-  
-      setUser((prevUser) => ({ ...prevUser, apiKey: data.apiKey }));
-      console.log("API key renewed successfully");
-      // Show a success message to the user
+      const { apiKey } = await userSettingsApi.renewApiKey();
+      setUser((prevUser) => ({ ...prevUser, apiKey }));
+      setSuccessMessage("API key renewed successfully");
+      setError(null);
     } catch (error) {
       console.error("Error renewing API key:", error);
-      setError(`Failed to renew API key: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setError(
+        error instanceof Error ? error.message : "Failed to renew API key"
+      );
+      setSuccessMessage(null);
     }
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!session?.address) {
+    return <div>Please connect your wallet to view settings.</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">

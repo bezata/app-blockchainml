@@ -28,7 +28,7 @@ interface Post {
 }
 
 interface ForumProps {
-  initialPosts: Post[]; // Replace 'any' with your actual Post type
+  initialPosts: Post[];
   session: SIWESession | null;
 }
 
@@ -41,25 +41,9 @@ export default function Forum({ initialPosts, session }: ForumProps) {
 export const getServerSideProps: GetServerSideProps<ForumProps> = async (
   context
 ) => {
-  let session = (await getSession(context)) as SIWESession | null;
-
-  console.log(
-    "Initial session check:",
-    session ? "Session found" : "No session"
-  );
+  const session = (await getSession(context)) as SIWESession | null;
 
   if (!session) {
-    // If no session, try to get it from the server
-    console.log("Attempting to retrieve session from server");
-    session = (await getSession({ req: context.req })) as SIWESession | null;
-    console.log(
-      "After server retrieval:",
-      session ? "Session found" : "No session"
-    );
-  }
-
-  if (!session) {
-    console.log("No session found, redirecting to signin");
     return {
       redirect: {
         destination: "/auth/signin",
@@ -67,8 +51,6 @@ export const getServerSideProps: GetServerSideProps<ForumProps> = async (
       },
     };
   }
-
-  console.log("Session found, user ID:", session.user.id);
 
   try {
     const res = await fetch(
@@ -85,7 +67,6 @@ export const getServerSideProps: GetServerSideProps<ForumProps> = async (
     }
 
     const initialPosts = await res.json();
-    console.log("Successfully fetched initial posts");
 
     return {
       props: {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, ChangeEvent } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,91 +18,262 @@ import {
   Award,
   BarChart2,
   Database,
-  Star,
   MessageCircle,
   User,
   Settings,
   Edit,
 } from "lucide-react";
 import { NavBar } from "@/components/component/nav-bar";
+import { useSession } from "next-auth/react";
+import { setCookie } from "cookies-next";
+
+interface UserSettings {
+  walletAddress: string;
+  name: string;
+  email: string;
+  bio: string;
+  avatar: string;
+  language: string;
+  theme: string;
+  notifications: {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+  };
+  privacy: {
+    profileVisibility: string;
+    showEmail: boolean;
+  };
+  twoFactor: boolean;
+  defaultPaymentAddress: string;
+  paymentAddress: string;
+  apiKey: string;
+  location: string;
+  joinDate: string;
+}
+
+type Activity = {
+  type: string;
+  name: string;
+  date: string;
+};
+
+type Achievement = {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+};
+
+const defaultUserSettings: UserSettings = {
+  walletAddress: "",
+  name: "",
+  email: "",
+  bio: "",
+  avatar: "",
+  language: "english",
+  theme: "light",
+  notifications: {
+    email: false,
+    push: false,
+    sms: false,
+  },
+  privacy: {
+    profileVisibility: "public",
+    showEmail: false,
+  },
+  twoFactor: false,
+  defaultPaymentAddress: "",
+  paymentAddress: "",
+  apiKey: "",
+  location: "",
+  joinDate: "",
+};
 
 export default function UserProfilePage() {
+  const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
-  const [user, setUser] = useState({
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    location: "San Francisco, USA",
-    joinDate: "March 2022",
-    bio: "Machine learning researcher specializing in natural language processing and computer vision. Passionate about open-source AI development.",
-    avatar: "https://i.pravatar.cc/300",
-    language: "english",
-    theme: "light",
-    notifications: {
-      email: true,
-      push: false,
-      sms: false,
-    },
-    privacy: {
-      profileVisibility: "public",
-      showEmail: false,
-    },
-    twoFactor: false,
-  });
+  const [user, setUser] = useState<UserSettings>(defaultUserSettings);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const achievements = [
-    {
-      icon: Database,
-      title: "Data Guru",
-      description: "Contributed 100+ high-quality datasets",
-    },
-    {
-      icon: BarChart2,
-      title: "Model Maestro",
-      description: "Created 25+ popular AI models",
-    },
-    {
-      icon: Star,
-      title: "Community Star",
-      description: "5000+ reputation points",
-    },
-  ];
+  useEffect(() => {
+    async function fetchUserProfile() {
+      if (status === "authenticated") {
+        try {
+          setLoading(true);
+          const response = await fetch("/api/user/userSettings", {
+            method: "GET",
+            credentials: "include",
+          });
 
-  const activityData = [
-    {
-      type: "Dataset Upload",
-      name: "Large Language Model Training Set",
-      date: "2023-06-05",
-    },
-    {
-      type: "Model Creation",
-      name: "Advanced Image Recognition v3",
-      date: "2023-05-30",
-    },
-    {
-      type: "Forum Post",
-      name: "Best Practices for Data Annotation",
-      date: "2023-05-22",
-    },
-    {
-      type: "Collaboration",
-      name: "Joint NLP Research Project",
-      date: "2023-05-15",
-    },
-  ];
+          if (response.ok) {
+            const data = await response.json();
+            setUser(data);
+          } else {
+            const errorData = await response.json();
+            setError(errorData.error || "Failed to fetch user settings");
+          }
+        } catch (error) {
+          console.error("Error fetching user settings:", error);
+          setError("An unexpected error occurred");
+        } finally {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchUserProfile();
+  }, [status]);
+
+  const updateProfile = async (updatedSettings: Partial<UserSettings>) => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/user/userSettings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedSettings),
+        credentials: "include", // This is important for including cookies
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data);
+        setIsEditing(false);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || "Failed to update user settings");
+      }
+    } catch (error) {
+      console.error("Error updating user settings:", error);
+      setError("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setUser((prevUser) => ({ ...prevUser, [name]: value }));
   };
 
-  const handleSave = () => {
-    console.log("Saving user profile:", user);
-    setIsEditing(false);
+  const handleSwitchChange = (name: string, checked: boolean) => {
+    setUser((prevUser) => ({
+      ...prevUser,
+      notifications: {
+        ...prevUser.notifications,
+        [name]: checked,
+      },
+    }));
   };
 
+  const handlePrivacyChange = (name: string, value: string | boolean) => {
+    setUser((prevUser) => ({
+      ...prevUser,
+      privacy: {
+        ...prevUser.privacy,
+        [name]: value,
+      },
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      const mutableFields = {
+        name: user.name,
+        email: user.email,
+        bio: user.bio,
+        avatar: user.avatar,
+        language: user.language,
+        theme: user.theme,
+        notifications: user.notifications,
+        privacy: user.privacy,
+        twoFactor: user.twoFactor,
+        defaultPaymentAddress: user.defaultPaymentAddress,
+        paymentAddress: user.paymentAddress,
+      };
+
+      const response = await fetch("/api/user-settings", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(mutableFields),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to update user settings: ${errorText}`);
+      }
+
+      const updatedUser = await response.json();
+      setUser((prevUser) => ({ ...prevUser, ...updatedUser }));
+      console.log("User settings updated successfully");
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error updating user settings:", error);
+      setError("Failed to update user settings");
+    }
+  };
+
+  const handleRenewApiKey = async () => {
+    if (!session?.address) {
+      setError("You must be logged in to renew your API key");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/user-settings/renew-api-key", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to renew API key");
+      }
+
+      const data = await response.json();
+
+      if (!data.apiKey) {
+        throw new Error("API key not found in response");
+      }
+
+      setUser((prevUser) => ({ ...prevUser, apiKey: data.apiKey }));
+      console.log("API key renewed successfully");
+    } catch (error) {
+      console.error("Error renewing API key:", error);
+      setError(
+        `Failed to renew API key: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  };
+
+  const activityData: Activity[] = [
+    { type: "Upload", name: "Dataset A", date: "2023-06-01" },
+    { type: "Create", name: "Model X", date: "2023-06-15" },
+  ];
+
+  const achievements: Achievement[] = [
+    {
+      icon: Award,
+      title: "Top Contributor",
+      description: "Awarded for exceptional contributions",
+    },
+    {
+      icon: Database,
+      title: "Data Master",
+      description: "Uploaded 100+ datasets",
+    },
+  ];
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <NavBar />
@@ -114,8 +285,8 @@ export default function UserProfilePage() {
                 <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback>
                   {user.name
-                    .split(" ")
-                    .map((n) => n[0])
+                    ?.split(" ")
+                    .map((n: string) => n[0])
                     .join("")}
                 </AvatarFallback>
               </Avatar>

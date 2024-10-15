@@ -1,4 +1,4 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth, { NextAuthOptions, DefaultUser } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import {
   SIWESession,
@@ -7,32 +7,28 @@ import {
   getAddressFromMessage,
 } from "@reown/appkit-siwe";
 
+const nextAuthSecret = process.env.NEXTAUTH_SECRET;
+const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID;
+const backendUrl = process.env.BACKEND_URL || "http://localhost:4000";
+
+if (!nextAuthSecret) throw new Error("NEXTAUTH_SECRET is not set");
+if (!projectId)
+  throw new Error("NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set");
+
 declare module "next-auth" {
   interface Session extends SIWESession {
     address: string;
     chainId: string;
-    user: {
-      id: string;
-      walletAddress: string;
-      apiKey: string;
-    };
+    accessToken: string;
+  }
+  interface User extends DefaultUser {
+    address: string;
+    chainId: string;
     accessToken: string;
   }
 }
 
-const nextAuthSecret = process.env.NEXTAUTH_SECRET;
-if (!nextAuthSecret) {
-  throw new Error("NEXTAUTH_SECRET is not set");
-}
-
-const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID;
-if (!projectId) {
-  throw new Error("NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set");
-}
-
-const BACKEND_URL = process.env.BACKEND_API_URL || "http://localhost:4000";
-
-const authOptions: NextAuthOptions = {
+export const authOptions: NextAuthOptions = {
   secret: nextAuthSecret,
   providers: [
     CredentialsProvider({
@@ -50,82 +46,107 @@ const authOptions: NextAuthOptions = {
         },
       },
       async authorize(credentials) {
+        if (!credentials?.message || !credentials?.signature) {
+          throw new Error("Message or signature is missing");
+        }
+
         try {
-          if (!credentials?.message || !credentials?.signature) {
-            throw new Error("Missing message or signature");
-          }
           const { message, signature } = credentials;
+
           const address = getAddressFromMessage(message);
           const chainId = getChainIdFromMessage(message);
+
+          console.log(
+            `Attempting to verify signature for address: ${address}, chainId: ${chainId}`
+          );
 
           const isValid = await verifySignature({
             address,
             message,
             signature,
-            chainId,
+            chainId: chainId.toString(),
             projectId,
           });
 
           if (!isValid) {
+            console.error("Invalid signature");
             throw new Error("Invalid signature");
           }
 
-          // SIWE verification successful, now validate with backend
-          const response = await fetch(`${BACKEND_URL}/api/v1/auth/login`, {
+          console.log("Signature verified, attempting backend login");
+
+          const response = await fetch(`${backendUrl}/api/v1/auth/login`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "X-Requested-With": "XMLHttpRequest", // CSRF protection
+            },
             body: JSON.stringify({ message, signature }),
           });
 
           if (!response.ok) {
             const errorData = await response.json();
-            console.error("Backend validation failed:", errorData);
-            throw new Error(errorData.error || "Backend validation failed");
+            console.error("Backend authentication failed:", errorData);
+            throw new Error(errorData.error || "Backend authentication failed");
           }
 
-          const data = await response.json();
+          const userData = await response.json();
+
+          if (!userData.user || !userData.accessToken) {
+            console.error("Invalid response from backend:", userData);
+            throw new Error("Invalid response from backend");
+          }
+
+          console.log(
+            "Login successful for address:",
+            userData.user.walletAddress
+          );
+
           return {
-            id: data.user.id,
-            walletAddress: data.user.walletAddress,
-            chainId: data.user.chainId,
-            apiKey: data.user.apiKey,
-            accessToken: data.accessToken,
+            id: userData.user.walletAddress,
+            address: userData.user.walletAddress,
+            chainId: userData.user.chainId,
+            accessToken: userData.accessToken,
           };
-        } catch (e) {
-          console.error("Authorization error:", e);
+        } catch (error) {
+          console.error("Authorization error:", error);
           return null;
         }
       },
     }),
   ],
+  session: {
+    strategy: "jwt",
+    maxAge: 24 * 60 * 60, // 1 day
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.walletAddress = user.walletAddress;
+        token.sub = user.address;
+        token.address = user.address;
         token.chainId = user.chainId;
-        token.apiKey = user.apiKey;
         token.accessToken = user.accessToken;
       }
       return token;
     },
     async session({ session, token }) {
-      session.address = token.walletAddress as string;
-      session.chainId = token.chainId as string;
-      session.user = {
-        id: token.id as string,
-        walletAddress: token.walletAddress as string,
-        apiKey: token.apiKey as string,
+      return {
+        ...session,
+        address: token.address as string,
+        chainId: token.chainId as string,
+        accessToken: token.accessToken as string,
       };
-      session.accessToken = token.accessToken as string;
-      return session;
     },
   },
   pages: {
-    signIn: "/auth/signin", // Specify custom sign-in page if you have one
-    error: "/auth/error", // Specify custom error page if you have one
+    signIn: "/auth/signin",
+    error: "/auth/error",
   },
   debug: process.env.NODE_ENV === "development",
 };
 
-export default NextAuth(authOptions);
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };
+
+export default handler;

@@ -35,7 +35,7 @@ import {
   ViewIcon,
   SaveIcon,
 } from "@/components/ui/nav-link";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 
 export function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -48,12 +48,17 @@ export function NavBar() {
   const { open } = useAppKit();
   const { address } = useAccount();
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   console.log(session);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const handleSignOut = async () => {
+    await signOut({ redirect: false });
+    disconnect();
+  };
 
   const profileMenuItems = [
     {
@@ -73,7 +78,11 @@ export function NavBar() {
       onClick: () => router.push("/settings"),
     },
 
-    { icon: LogOut, label: "Logout", onClick: () => disconnect() },
+    {
+      icon: LogOut,
+      label: "Logout",
+      onClick: handleSignOut,
+    },
   ];
 
   const ProfileMenu = ({ isMobile = false }) => (
