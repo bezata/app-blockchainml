@@ -1,6 +1,8 @@
+"use client";
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trash2, Download, ExternalLink } from "lucide-react";
+import { Trash2, Download, ExternalLink, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 interface Dataset {
   id: string;
@@ -80,9 +83,14 @@ const initialDatasets: Dataset[] = [
   },
 ];
 
-export function SavedDatasetsComponent() {
+interface SavedDatasetsComponentProps {
+  onDatasetDetails: (dataset: Dataset) => void;
+}
+
+export function SavedDatasetsComponent({ onDatasetDetails }: SavedDatasetsComponentProps) {
   const [savedDatasets, setSavedDatasets] =
     useState<Dataset[]>(initialDatasets);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const removeDataset = (id: string) => {
     setSavedDatasets((prevDatasets) =>
@@ -95,8 +103,14 @@ export function SavedDatasetsComponent() {
     return `${sizeInMB.toFixed(2)} MB`;
   };
 
+  const filteredDatasets = savedDatasets.filter((dataset) =>
+    dataset.cardData.pretty_name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="h-full bg-gradient-to-b from-gray-50 to-gray-100 p-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -104,15 +118,30 @@ export function SavedDatasetsComponent() {
         className="max-w-4xl mx-auto"
       >
         <Card className="bg-white shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-2xl font-light text-gray-800">
-              Saved Datasets
-            </CardTitle>
+          <CardHeader className="border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-2xl font-semibold text-gray-800">
+                Saved Datasets
+              </CardTitle>
+              <div className="relative">
+                <Search
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  size={18}
+                />
+                <Input
+                  type="text"
+                  placeholder="Search datasets..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border-gray-300 focus:border-green-500 focus:ring-green-500 rounded-md"
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[70vh]">
               <AnimatePresence>
-                {savedDatasets.map((dataset) => (
+                {filteredDatasets.map((dataset) => (
                   <motion.div
                     key={dataset.id}
                     initial={{ opacity: 0, height: 0 }}
@@ -120,7 +149,7 @@ export function SavedDatasetsComponent() {
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <Card className="mb-6 bg-gray-50 hover:bg-gray-100 transition-colors duration-300">
+                    <Card className="mb-6 bg-yellow-50 hover:bg-yellow-100 transition-colors duration-300">
                       <CardContent className="p-6">
                         <div className="flex justify-between items-start mb-4">
                           <div>
@@ -198,7 +227,7 @@ export function SavedDatasetsComponent() {
                           </p>
                         </div>
                       </CardContent>
-                      <CardFooter className="bg-gray-100 p-4 flex justify-between items-center">
+                      <CardFooter className="bg-yellow-100 p-4 flex justify-between items-center">
                         <Button
                           variant="outline"
                           size="sm"
@@ -211,6 +240,7 @@ export function SavedDatasetsComponent() {
                           variant="ghost"
                           size="sm"
                           className="text-blue-600 hover:text-blue-700 transition-colors duration-300"
+                          onClick={() => onDatasetDetails(dataset)}
                         >
                           <ExternalLink className="mr-2 h-4 w-4" />
                           View Details
@@ -224,7 +254,7 @@ export function SavedDatasetsComponent() {
           </CardContent>
           <CardFooter className="justify-between border-t p-6">
             <p className="text-sm text-gray-600">
-              {savedDatasets.length} datasets saved
+              {filteredDatasets.length} datasets saved
             </p>
             <Button
               variant="outline"

@@ -132,7 +132,11 @@ export function NavBar() {
             />
             <NavLinks href="/datasets" icon={<DatabaseIcon />} text="Dataset" />
             <NavLinks href="/models" icon={<ViewIcon />} text="Models" />{" "}
-            <NavLinks href="/forum" icon={<MessageCircleCode />} text="Forum" />
+            <NavLinks
+              href="/forum"
+              icon={<MessageCircleCode />}
+              text="Social"
+            />
             <NavLinks href="/monetization" icon={<DollarSign />} text="Earn" />
             <NavLinks
               href="/savedItems"

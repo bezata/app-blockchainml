@@ -7,6 +7,9 @@ import type {
 import { createSIWEConfig, formatMessage } from "@reown/appkit-siwe";
 import { polygon } from "@reown/appkit/networks";
 
+
+
+
 export const siweConfig = createSIWEConfig({
   // @ts-expect-error : TODO: fix this
   getMessageParams: async () => ({

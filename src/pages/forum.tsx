@@ -1,6 +1,6 @@
-import { GetServerSideProps } from "next";
-import { getSession } from "next-auth/react";
-import ForumPage, { SIWESession } from "../components/forum-page";
+
+import SocialFeed from "../components/forum-page";
+import { SIWESession } from "@reown/appkit-siwe";
 
 interface Author {
   id: string;
@@ -33,54 +33,7 @@ interface ForumProps {
 }
 
 export default function Forum({ initialPosts, session }: ForumProps) {
-  return (
-    <ForumPage initialPosts={initialPosts} session={session as SIWESession} />
-  );
+  return <SocialFeed />;
 }
 
-export const getServerSideProps: GetServerSideProps<ForumProps> = async (
-  context
-) => {
-  const session = (await getSession(context)) as SIWESession | null;
 
-  if (!session) {
-    return {
-      redirect: {
-        destination: "/auth/signin",
-        permanent: false,
-      },
-    };
-  }
-
-  try {
-    const res = await fetch(
-      `${process.env.BACKEND_API_URL}/api/v1/forum/posts`,
-      {
-        headers: {
-          Authorization: `Bearer ${session.accessToken}`,
-        },
-      }
-    );
-
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-
-    const initialPosts = await res.json();
-
-    return {
-      props: {
-        initialPosts,
-        session,
-      },
-    };
-  } catch (error) {
-    console.error("Failed to fetch initial posts:", error);
-    return {
-      props: {
-        initialPosts: [],
-        session,
-      },
-    };
-  }
-};
