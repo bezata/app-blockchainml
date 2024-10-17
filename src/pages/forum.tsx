@@ -1,5 +1,6 @@
 "use client";
 
+import { BlockedUsersModal } from "@/components/blockedUserModal";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
@@ -161,6 +162,21 @@ export default function SocialFeed() {
   const [newPost, setNewPost] = useState({ content: "", tags: [] });
   const [searchTerm, setSearchTerm] = useState("");
   const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [showBlockedUsersModal, setShowBlockedUsersModal] = useState(false);
+  const [blockedUsers, setBlockedUsers] = useState([
+    {
+      id: "b1",
+      name: "Blocked User 1",
+      username: "blockeduser1",
+      avatar: "https://i.pravatar.cc/150?img=6",
+    },
+    {
+      id: "b2",
+      name: "Blocked User 2",
+      username: "blockeduser2",
+      avatar: "https://i.pravatar.cc/150?img=7",
+    },
+  ]);
 
   const handleNewPost = (e: React.FormEvent) => {
     e.preventDefault();
@@ -206,17 +222,6 @@ export default function SocialFeed() {
     );
   };
 
-  if (status === "loading")
-    return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
-      </div>
-    );
-  if (status === "unauthenticated") {
-    router.push("/auth/signin");
-    return null;
-  }
-
   const filteredPosts = posts.filter(
     (post) =>
       post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -224,6 +229,10 @@ export default function SocialFeed() {
         tag.toLowerCase().includes(searchTerm.toLowerCase())
       )
   );
+
+  const handleUnblockUser = (userId: string) => {
+    setBlockedUsers(blockedUsers.filter((user) => user.id !== userId));
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 font-sans">
@@ -266,6 +275,7 @@ export default function SocialFeed() {
                   <Button
                     variant="ghost"
                     className="w-full justify-start   hover:bg-red-50"
+                    onClick={() => setShowBlockedUsersModal(true)}
                   >
                     <UserRoundX className=" text-red-600 mr-2 h-4 w-4" />
                     Blocked Users
@@ -420,6 +430,12 @@ export default function SocialFeed() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <BlockedUsersModal
+        isOpen={showBlockedUsersModal}
+        onClose={() => setShowBlockedUsersModal(false)}
+        blockedUsers={blockedUsers}
+        onUnblock={handleUnblockUser}
+      />
     </div>
   );
 }
