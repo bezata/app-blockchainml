@@ -27,8 +27,9 @@ import {
   IconBrandTwitter,
   IconBrandDiscord,
 } from "@tabler/icons-react";
+import Image from "next/image";
 
-export function BlockchainmlExplorer() {
+export default function BlockchainmlExplorer() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -140,15 +141,25 @@ export function BlockchainmlExplorer() {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-b from-gray-50 to-beige-100 text-gray-800 font-sans"
+      className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 text-gray-800 font-sans"
       style={{ fontFamily: "'Poppins', 'Open Sans', sans-serif" }}
     >
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
         <div className="container mx-auto px-6">
-          <nav className="flex items-center justify-between py-4">
+          <nav className="flex items-center justify-between py-4 ">
             <div className="flex items-center">
-              <Link href="/" className="text-2xl font-light text-gray-700 mr-8">
-                BlockchainML
+              <Link
+                href="/"
+                className="flex items-center text-2xl font-light text-gray-700 mr-8"
+              >
+                <Image
+                  src="/angry.png"
+                  alt="BlockchainML Explorer"
+                  width={48}
+                  height={48}
+                  className="mr-2"
+                />
+                <span>BlockchainML</span>
               </Link>
               <div className="hidden md:flex space-x-6">
                 <Link
@@ -431,7 +442,7 @@ export function BlockchainmlExplorer() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-lg font-semibold text-gray-700 mb-4">
-                BlockchainML
+                BlockchainML Explorer
               </h3>
               <p className="text-sm text-gray-600">
                 Empowering decentralized machine learning through blockchain

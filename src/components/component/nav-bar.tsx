@@ -17,6 +17,7 @@ import {
   Settings,
   LogOut,
   LayoutDashboard,
+  Search,
 } from "lucide-react";
 import { useRouter } from "next/router";
 import { SubscriptionPopupComponent } from "@/components/subscription-popup";
@@ -143,6 +144,7 @@ export function NavBar() {
               icon={<SaveIcon />}
               text="Saved Items"
             />
+            <NavLinks href="/explorer" icon={<Search />} text="Explorer" />
           </div>
         </nav>
         <div className="hidden md:flex items-center space-x-2">
