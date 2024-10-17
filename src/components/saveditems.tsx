@@ -187,11 +187,8 @@ export default function SavedDatasetsPage() {
     <div className="min-h-screen bg-gray-50">
       <NavBar />
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className=" mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">
-            Saved Datasets
-          </h1>
           <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
             <div className="relative">
               <Search

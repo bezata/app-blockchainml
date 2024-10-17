@@ -21,12 +21,10 @@ import {
   Send,
   Search,
   Calendar,
-  Hash,
   TrendingUp,
   Home,
   User,
-  Settings,
-  LogOut,
+  UserRoundX,
 } from "lucide-react";
 import {
   Dialog,
@@ -250,15 +248,7 @@ export default function SocialFeed() {
                     </p>
                   </div>
                 </div>
-                <nav className="space-y-2">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start"
-                    onClick={() => setActiveTab("home")}
-                  >
-                    <Home className="mr-2 h-4 w-4" />
-                    Home
-                  </Button>
+                <nav className="">
                   <Button
                     variant="ghost"
                     className="w-full justify-start"
@@ -273,16 +263,12 @@ export default function SocialFeed() {
                       Messages
                     </Button>
                   </Link>
-                  <Button variant="ghost" className="w-full justify-start">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </Button>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="w-full justify-start   hover:bg-red-50"
                   >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log Out
+                    <UserRoundX className=" text-red-600 mr-2 h-4 w-4" />
+                    Blocked Users
                   </Button>
                 </nav>
               </CardContent>
@@ -335,7 +321,7 @@ export default function SocialFeed() {
               onValueChange={setActiveTab}
               className="space-y-4"
             >
-              <TabsList className="bg-white rounded-lg p-1 shadow-sm border hover:text-white text-gray-600 border-gray-200">
+              <TabsList className="bg-white rounded-lg p-1 shadow-sm border  text-gray-600 border-gray-200">
                 <TabsTrigger value="home">For You</TabsTrigger>
                 <TabsTrigger value="trending">Trending</TabsTrigger>
                 <TabsTrigger value="latest">Latest</TabsTrigger>
@@ -475,7 +461,7 @@ function PostCard({
                 </p>
               </div>
               <p className="text-sm text-gray-500">
-                <Calendar className="w-4 h-4 inline mr-1" />
+                <Calendar className="w-4 h-4 mb-1 inline mr-1" />
                 {new Date(post.createdAt).toLocaleDateString()}
               </p>
             </div>
