@@ -256,39 +256,33 @@ export default function UserSettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 px-4 sm:px-6 lg:px-8">
       <NavBar />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 max-w-7xl">
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
           className="space-y-4"
         >
-          <TabsList className="bg-white rounded-lg p-1 shadow-sm">
+          <TabsList className="bg-white rounded-lg p-1 shadow-sm flex flex-wrap justify-center sm:justify-start">
             {[
-              "profile",
-              "account",
-              "notifications",
-              "privacy",
-              "projects",
-              "monetization",
-              "advanced",
-            ].map((tab) => (
+              { value: "profile", icon: User },
+              { value: "account", icon: Lock },
+              { value: "notifications", icon: Bell },
+              { value: "privacy", icon: Globe },
+              { value: "projects", icon: Link },
+              { value: "monetization", icon: DollarSign },
+              { value: "advanced", icon: Settings },
+            ].map(({ value, icon: Icon }) => (
               <TabsTrigger
-                key={tab}
-                value={tab}
-                className="data-[state=active]:bg-green-500 data-[state=active]:text-white"
+                key={value}
+                value={value}
+                className="data-[state=active]:bg-green-500 data-[state=active]:text-white flex-1 sm:flex-none"
               >
-                {tab === "profile" && <User className="w-4 h-4 mr-2" />}
-                {tab === "account" && <Lock className="w-4 h-4 mr-2" />}
-                {tab === "notifications" && <Bell className="w-4 h-4 mr-2" />}
-                {tab === "privacy" && <Globe className="w-4 h-4 mr-2" />}
-                {tab === "projects" && <Link className="w-4 h-4 mr-2" />}
-                {tab === "monetization" && (
-                  <DollarSign className="w-4 h-4 mr-2" />
-                )}
-                {tab === "advanced" && <Settings className="w-4 h-4 mr-2" />}
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                <Icon className="w-5 h-5 sm:mr-2" />
+                <span className="hidden sm:inline">
+                  {value.charAt(0).toUpperCase() + value.slice(1)}
+                </span>
               </TabsTrigger>
             ))}
           </TabsList>
@@ -841,7 +835,7 @@ export default function UserSettingsPage() {
           </TabsContent>
         </Tabs>
 
-        <div className="mt-8 flex justify-end space-x-4">
+        <div className="mt-8 flex justify-center sm:justify-end space-x-4">
           <Button
             variant="outline"
             className="border-gray-300 text-gray-700 hover:bg-gray-100"
