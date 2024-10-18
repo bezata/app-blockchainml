@@ -23,7 +23,6 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/hooks/use-toast";
 import {
   Award,
   BarChart,
@@ -170,11 +169,6 @@ export default function UserProfilePage() {
           setActivities(activitiesResponse);
         } catch (error) {
           console.error("Error fetching user profile:", error);
-          toast({
-            title: "Error",
-            description: "Failed to load user profile",
-            variant: "destructive",
-          });
         } finally {
           setLoading(false);
         }

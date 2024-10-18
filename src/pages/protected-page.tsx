@@ -17,7 +17,7 @@ export default function ProtectedPage() {
   return (
     <div>
       <h1>Protected Page</h1>
-      <p>Welcome, {session?.user.ethAddress}</p>
+      <p>Welcome, {}</p>
       {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
     </div>
   );

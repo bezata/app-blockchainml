@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,229 +31,203 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { NavBar } from "@/components/component/nav-bar";
-import { toast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
-
-interface UserSettings {
-  walletAddress: string;
-  name: string;
-  email: string;
-  bio: string;
-  avatar: string;
-  language: string;
-  theme: string;
-  notifications: {
-    email: boolean;
-    push: boolean;
-    sms: boolean;
-  };
-  privacy: {
-    profileVisibility: string;
-    showEmail: boolean;
-  };
-  twoFactor: boolean;
-  defaultPaymentAddress: string;
-  paymentAddress: string;
-  apiKey: string;
-  location: string;
-  joinDate: string;
-  githubProfile: string;
-  twitterProfile: string;
-  projects: Project[];
-  repositories: Repository[];
-  monetization: {
-    paymentMethod: string;
-    subscriptionTier: string;
-    customDomain: boolean;
-  };
-}
-
-interface Project {
-  id: string;
-  name: string;
-  description: string;
-  link: string;
-}
-
-interface Repository {
-  id: string;
-  name: string;
-  link: string;
-}
-
-const mockUserData: UserSettings = {
-  walletAddress: "0x1234...5678",
-  name: "Alice Johnson",
-  email: "alice@example.com",
-  bio: "Blockchain enthusiast and full-stack developer",
-  avatar: "https://i.pravatar.cc/150?img=1",
-  language: "english",
-  theme: "light",
-  notifications: {
-    email: true,
-    push: false,
-    sms: true,
-  },
-  privacy: {
-    profileVisibility: "public",
-    showEmail: false,
-  },
-  twoFactor: true,
-  defaultPaymentAddress: "0xabcd...ef01",
-  paymentAddress: "0x2345...6789",
-  apiKey: "sk_test_abcdefghijklmnop",
-  location: "San Francisco, CA",
-  joinDate: "January 2022",
-  githubProfile: "https://github.com/alicejohnson",
-  twitterProfile: "https://twitter.com/alicejohnson",
-  projects: [
-    {
-      id: "1",
-      name: "Decentralized Exchange",
-      description: "A cutting-edge DEX for seamless token swaps",
-      link: "https://dex-project.com",
-    },
-    {
-      id: "2",
-      name: "NFT Marketplace",
-      description: "Platform for creating and trading unique digital assets",
-      link: "https://nft-marketplace.io",
-    },
-    {
-      id: "3",
-      name: "DeFi Lending Protocol",
-      description: "Decentralized lending and borrowing platform",
-      link: "https://defi-lending.org",
-    },
-  ],
-  repositories: [
-    {
-      id: "repo1",
-      name: "smart-contracts",
-      link: "https://github.com/alicejohnson/smart-contracts",
-    },
-    {
-      id: "repo2",
-      name: "dapp-frontend",
-      link: "https://github.com/alicejohnson/dapp-frontend",
-    },
-    {
-      id: "repo3",
-      name: "blockchain-explorer",
-      link: "https://github.com/alicejohnson/blockchain-explorer",
-    },
-  ],
-  monetization: {
-    paymentMethod: "crypto",
-    subscriptionTier: "pro",
-    customDomain: true,
-  },
-};
+import { useSession } from "next-auth/react";
+import {
+  UserSettings,
+  Project,
+  Repository,
+  NotificationPreferences,
+  PrivacySettings,
+  MonetizationSettings,
+} from "@/types/user";
 
 export default function UserSettingsPage() {
+  const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState("profile");
-  const [user, setUser] = useState<UserSettings>(mockUserData);
-  const [newProject, setNewProject] = useState({
+  const [user, setUser] = useState<UserSettings | null>(null);
+  const [changes, setChanges] = useState<Partial<UserSettings>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [newProject, setNewProject] = useState<Omit<Project, "id" | "userId">>({
     name: "",
     description: "",
     link: "",
   });
-  const [newRepository, setNewRepository] = useState({ name: "", link: "" });
+  const [newRepository, setNewRepository] = useState<
+    Omit<Repository, "id" | "userId">
+  >({
+    name: "",
+    link: "",
+  });
 
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchUserSettings();
+    }
+  }, [status]);
+
+  const fetchUserSettings = async () => {
+    try {
+      const response = await fetch("/api/user/settings");
+      if (!response.ok) {
+        throw new Error("Failed to fetch user settings");
+      }
+      const data: UserSettings = await response.json();
+      setUser(data);
+      setChanges({});
+    } catch (err) {
+      setError("Error fetching user settings");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setUser((prevUser) => ({ ...prevUser, [name]: value }));
+    setChanges((prevChanges) => ({ ...prevChanges, [name]: value }));
   };
 
-  const handleSwitchChange = (name: string, checked: boolean) => {
-    setUser((prevUser) => ({
-      ...prevUser,
-      notifications: {
-        ...prevUser.notifications,
-        [name]: checked,
-      },
+  const handleNotificationChange = (checked: boolean) => {
+    setChanges((prevChanges) => ({
+      ...prevChanges,
+      notificationPreferences: {
+        ...(prevChanges.notificationPreferences ?? {}),
+        emailNotifications: checked,
+      } as NotificationPreferences,
     }));
   };
 
-  const handlePrivacyChange = (name: string, value: string | boolean) => {
-    setUser((prevUser) => ({
-      ...prevUser,
-      privacy: {
-        ...prevUser.privacy,
+  const handlePrivacyChange = (
+    name: keyof PrivacySettings,
+    value: string | boolean
+  ) => {
+    setChanges((prevChanges) => ({
+      ...prevChanges,
+      privacySettings: {
+        ...(prevChanges.privacySettings ?? {}),
         [name]: value,
-      },
+      } as PrivacySettings,
     }));
   };
 
-  const handleMonetizationChange = (name: string, value: string | boolean) => {
-    setUser((prevUser) => ({
-      ...prevUser,
-      monetization: {
-        ...prevUser.monetization,
+  const handleMonetizationChange = (
+    name: keyof MonetizationSettings,
+    value: string | null
+  ) => {
+    setChanges((prevChanges) => ({
+      ...prevChanges,
+      monetizationSettings: {
+        ...(prevChanges.monetizationSettings ?? {}),
         [name]: value,
-      },
+      } as MonetizationSettings,
     }));
-  };
-
-  const handleSave = async () => {
-    toast({
-      title: "Success",
-      description: "User settings updated successfully",
-    });
-  };
-
-  const handleRenewApiKey = async () => {
-    setUser((prevUser) => ({
-      ...prevUser,
-      apiKey: "sk_test_" + Math.random().toString(36).substr(2, 18),
-    }));
-    toast({
-      title: "Success",
-      description: "API key renewed successfully",
-    });
   };
 
   const handleAddProject = () => {
-    if (newProject.name && newProject.description && newProject.link) {
-      setUser((prevUser) => ({
-        ...prevUser,
-        projects: [
-          ...prevUser.projects,
-          { ...newProject, id: Date.now().toString() },
-        ],
-      }));
-      setNewProject({ name: "", description: "", link: "" });
+    if (!user || !newProject.name) return;
+
+    const updatedProjects: Project[] = [
+      ...(user.projects || []),
+      { ...newProject, id: Date.now().toString(), userId: user.id },
+    ];
+    setChanges((prevChanges) => ({
+      ...prevChanges,
+      projects: updatedProjects,
+    }));
+    setNewProject({ name: "", description: "", link: "" });
+  };
+
+  const handleAddRepository = () => {
+    if (!user || !newRepository.name || !newRepository.link) return;
+
+    const updatedRepositories: Repository[] = [
+      ...(user.repositories || []),
+      { ...newRepository, id: Date.now().toString(), userId: user.id },
+    ];
+    setChanges((prevChanges) => ({
+      ...prevChanges,
+      repositories: updatedRepositories,
+    }));
+    setNewRepository({ name: "", link: "" });
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch("/api/user/settings", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(changes),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update user settings");
+      }
+
+      const updatedUser: UserSettings = await response.json();
+      setUser(updatedUser);
+      setChanges({});
+      console.log("User settings updated successfully");
+    } catch (err) {
+      setError("Error updating user settings");
+      console.error(err);
+    }
+  };
+
+  const handleRenewApiKey = async () => {
+    try {
+      const response = await fetch("/api/user/settings", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ renewApiKey: true }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to renew API key");
+      }
+
+      const updatedUser: UserSettings = await response.json();
+      setUser(updatedUser);
+      console.log("API key renewed successfully");
+    } catch (err) {
+      setError("Error renewing API key");
+      console.error(err);
     }
   };
 
   const handleRemoveProject = (id: string) => {
-    setUser((prevUser) => ({
-      ...prevUser,
-      projects: prevUser.projects.filter((project) => project.id !== id),
-    }));
-  };
+    if (!user) return;
 
-  const handleAddRepository = () => {
-    if (newRepository.name && newRepository.link) {
-      setUser((prevUser) => ({
-        ...prevUser,
-        repositories: [
-          ...prevUser.repositories,
-          { ...newRepository, id: Date.now().toString() },
-        ],
-      }));
-      setNewRepository({ name: "", link: "" });
-    }
+    const updatedProjects = user.projects.filter(
+      (project) => project.id !== id
+    );
+    setChanges((prevChanges) => ({
+      ...prevChanges,
+      projects: updatedProjects,
+    }));
   };
 
   const handleRemoveRepository = (id: string) => {
-    setUser((prevUser) => ({
-      ...prevUser,
-      repositories: prevUser.repositories.filter((repo) => repo.id !== id),
+    if (!user) return;
+
+    const updatedRepositories = user.repositories.filter(
+      (repo) => repo.id !== id
+    );
+    setChanges((prevChanges) => ({
+      ...prevChanges,
+      repositories: updatedRepositories,
     }));
   };
+
+  const mergedUser = { ...user, ...changes };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 px-4 sm:px-6 lg:px-8">
@@ -297,12 +271,15 @@ export default function UserSettingsPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-4">
                   <Avatar className="w-20 h-20">
-                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarImage
+                      src={user?.avatar || undefined}
+                      alt={user?.name || ""}
+                    />
                     <AvatarFallback>
-                      {user.name
-                        .split(" ")
+                      {user?.name
+                        ?.split(" ")
                         .map((n) => n[0])
-                        .join("")}
+                        .join("") || ""}
                     </AvatarFallback>
                   </Avatar>
                   <Button className="bg-green-500 hover:bg-green-600 text-white">
@@ -310,12 +287,12 @@ export default function UserSettingsPage() {
                   </Button>
                 </div>
                 {[
-                  "name",
+                  "username",
                   "email",
                   "bio",
                   "language",
-                  "githubProfile",
-                  "twitterProfile",
+                  "githubProfileLink",
+                  "xProfileLink",
                 ].map((field) => (
                   <div key={field} className="space-y-2">
                     <Label htmlFor={field} className="text-gray-700">
@@ -333,16 +310,19 @@ export default function UserSettingsPage() {
                       <Textarea
                         id={field}
                         name={field}
-                        value={user[field as keyof UserSettings] as string}
+                        value={
+                          (mergedUser[field as keyof UserSettings] as string) ||
+                          ""
+                        }
                         onChange={handleInputChange}
                         className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                       />
                     ) : field === "language" ? (
                       <Select
-                        value={user.language}
+                        value={mergedUser.language || ""}
                         onValueChange={(value) =>
-                          setUser((prevUser) => ({
-                            ...prevUser,
+                          setChanges((prevChanges) => ({
+                            ...prevChanges,
                             language: value,
                           }))
                         }
@@ -367,7 +347,10 @@ export default function UserSettingsPage() {
                       <Input
                         id={field}
                         name={field}
-                        value={user[field as keyof UserSettings] as string}
+                        value={
+                          (mergedUser[field as keyof UserSettings] as string) ||
+                          ""
+                        }
                         onChange={handleInputChange}
                         className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                         type={field === "email" ? "email" : "text"}
@@ -378,14 +361,18 @@ export default function UserSettingsPage() {
                 <div className="flex space-x-4">
                   <Button
                     className="bg-gray-800 hover:bg-gray-900 text-white"
-                    onClick={() => window.open(user.githubProfile, "_blank")}
+                    onClick={() =>
+                      window.open(mergedUser.githubProfileLink || "", "_blank")
+                    }
                   >
                     <Github className="w-4 h-4 mr-2" />
                     GitHub Profile
                   </Button>
                   <Button
                     className="bg-blue-400 hover:bg-blue-500 text-white"
-                    onClick={() => window.open(user.twitterProfile, "_blank")}
+                    onClick={() =>
+                      window.open(mergedUser.xProfileLink || "", "_blank")
+                    }
                   >
                     <Twitter className="w-4 h-4 mr-2" />X Profile
                   </Button>
@@ -402,50 +389,55 @@ export default function UserSettingsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {["defaultPaymentAddress", "paymentAddress", "apiKey"].map(
-                  (field) => (
-                    <div key={field} className="space-y-2">
-                      <Label htmlFor={field} className="text-gray-700">
-                        {field
+                {[
+                  "defaultPaymentAddress",
+                  "selectedPaymentAddress",
+                  "apiKey",
+                ].map((field) => (
+                  <div key={field} className="space-y-2">
+                    <Label htmlFor={field} className="text-gray-700">
+                      {field
+                        .split(/(?=[A-Z])/)
+                        .join(" ")
+                        .charAt(0)
+                        .toUpperCase() +
+                        field
                           .split(/(?=[A-Z])/)
                           .join(" ")
-                          .charAt(0)
-                          .toUpperCase() +
-                          field
-                            .split(/(?=[A-Z])/)
-                            .join(" ")
-                            .slice(1)}
-                      </Label>
-                      <div className="flex space-x-2">
-                        <Input
-                          id={field}
-                          name={field}
-                          value={user[field as keyof UserSettings] as string}
-                          onChange={handleInputChange}
-                          className="border-gray-300 focus:border-green-500 focus:ring-green-500 flex-grow"
-                          readOnly={field === "apiKey"}
-                        />
-                        {field === "apiKey" && (
-                          <Button
-                            onClick={handleRenewApiKey}
-                            className="bg-green-500 hover:bg-green-600 text-white"
-                          >
-                            <RefreshCw className="w-4 h-4 mr-2" />
-                            Renew
-                          </Button>
-                        )}
-                      </div>
+                          .slice(1)}
+                    </Label>
+                    <div className="flex space-x-2">
+                      <Input
+                        id={field}
+                        name={field}
+                        value={
+                          (mergedUser[field as keyof UserSettings] as string) ||
+                          ""
+                        }
+                        onChange={handleInputChange}
+                        className="border-gray-300 focus:border-green-500 focus:ring-green-500 flex-grow"
+                        readOnly={field === "apiKey"}
+                      />
+                      {field === "apiKey" && (
+                        <Button
+                          onClick={handleRenewApiKey}
+                          className="bg-green-500 hover:bg-green-600 text-white"
+                        >
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Renew
+                        </Button>
+                      )}
                     </div>
-                  )
-                )}
+                  </div>
+                ))}
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="two-factor"
-                    checked={user.twoFactor}
+                    checked={mergedUser.twoFactorEnabled}
                     onCheckedChange={(checked) =>
-                      setUser((prevUser) => ({
-                        ...prevUser,
-                        twoFactor: checked,
+                      setChanges((prevChanges) => ({
+                        ...prevChanges,
+                        twoFactorEnabled: checked,
                       }))
                     }
                     className="data-[state=checked]:bg-green-500"
@@ -466,24 +458,23 @@ export default function UserSettingsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {Object.entries(user.notifications).map(([key, value]) => (
-                  <div key={key} className="flex items-center space-x-2">
-                    <Switch
-                      id={`${key}-notifications`}
-                      checked={value}
-                      onCheckedChange={(checked) =>
-                        handleSwitchChange(key, checked)
-                      }
-                      className="data-[state=checked]:bg-green-500"
-                    />
-                    <Label
-                      htmlFor={`${key}-notifications`}
-                      className="text-gray-700"
-                    >
-                      {key.charAt(0).toUpperCase() + key.slice(1)} Notifications
-                    </Label>
-                  </div>
-                ))}
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="email-notifications"
+                    checked={
+                      mergedUser.notificationPreferences?.emailNotifications ??
+                      false
+                    }
+                    onCheckedChange={handleNotificationChange}
+                    className="data-[state=checked]:bg-green-500"
+                  />
+                  <Label
+                    htmlFor="email-notifications"
+                    className="text-gray-700"
+                  >
+                    Email Notifications
+                  </Label>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -501,7 +492,7 @@ export default function UserSettingsPage() {
                     Profile Visibility
                   </Label>
                   <Select
-                    value={user.privacy.profileVisibility}
+                    value={mergedUser.privacySettings?.profileVisibility || ""}
                     onValueChange={(value) =>
                       handlePrivacyChange("profileVisibility", value)
                     }
@@ -524,7 +515,7 @@ export default function UserSettingsPage() {
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="show-email"
-                    checked={user.privacy.showEmail}
+                    checked={mergedUser.privacySettings?.showEmail ?? false}
                     onCheckedChange={(checked) =>
                       handlePrivacyChange("showEmail", checked)
                     }
@@ -550,7 +541,7 @@ export default function UserSettingsPage() {
                   <h3 className="text-lg font-semibold text-gray-700">
                     Projects
                   </h3>
-                  {user.projects.map((project) => (
+                  {mergedUser?.projects?.map((project) => (
                     <div
                       key={project.id}
                       className="flex items-center justify-between bg-yellow-50 p-3 rounded-md"
@@ -563,7 +554,7 @@ export default function UserSettingsPage() {
                           {project.description}
                         </p>
                         <a
-                          href={project.link}
+                          href={project.link || "#"}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-green-500 hover:text-green-600 text-sm"
@@ -590,7 +581,7 @@ export default function UserSettingsPage() {
                     />
                     <Input
                       placeholder="Project Description"
-                      value={newProject.description}
+                      value={newProject.description || ""}
                       onChange={(e) =>
                         setNewProject({
                           ...newProject,
@@ -601,7 +592,7 @@ export default function UserSettingsPage() {
                     />
                     <Input
                       placeholder="Project Link"
-                      value={newProject.link}
+                      value={newProject.link || ""}
                       onChange={(e) =>
                         setNewProject({ ...newProject, link: e.target.value })
                       }
@@ -623,7 +614,7 @@ export default function UserSettingsPage() {
                   <h3 className="text-lg font-semibold text-gray-700">
                     Repositories
                   </h3>
-                  {user.repositories.map((repo) => (
+                  {mergedUser?.repositories?.map((repo) => (
                     <div
                       key={repo.id}
                       className="flex items-center justify-between bg-yellow-50 p-3 rounded-md"
@@ -698,7 +689,7 @@ export default function UserSettingsPage() {
                     Payment Method
                   </Label>
                   <Select
-                    value={user.monetization.paymentMethod}
+                    value={mergedUser.monetizationSettings?.paymentMethod || ""}
                     onValueChange={(value) =>
                       handleMonetizationChange("paymentMethod", value)
                     }
@@ -723,7 +714,9 @@ export default function UserSettingsPage() {
                     Subscription Tier
                   </Label>
                   <Select
-                    value={user.monetization.subscriptionTier}
+                    value={
+                      mergedUser.monetizationSettings?.subscriptionTier || ""
+                    }
                     onValueChange={(value) =>
                       handleMonetizationChange("subscriptionTier", value)
                     }
@@ -742,32 +735,6 @@ export default function UserSettingsPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="custom-domain"
-                    checked={user.monetization.customDomain}
-                    onCheckedChange={(checked) =>
-                      handleMonetizationChange("customDomain", checked)
-                    }
-                    className="data-[state=checked]:bg-green-500"
-                  />
-                  <Label htmlFor="custom-domain" className="text-gray-700">
-                    Enable Custom Domain
-                  </Label>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="payment-address" className="text-gray-700">
-                    Payment Address
-                  </Label>
-                  <Input
-                    id="payment-address"
-                    name="paymentAddress"
-                    value={user.paymentAddress}
-                    onChange={handleInputChange}
-                    className="border-gray-300 focus:border-green-500 focus:ring-green-500"
-                    placeholder="Enter your payment address"
-                  />
                 </div>
               </CardContent>
             </Card>
@@ -789,7 +756,7 @@ export default function UserSettingsPage() {
                     <Input
                       id="api-key"
                       name="apiKey"
-                      value={user.apiKey}
+                      value={mergedUser.apiKey}
                       readOnly
                       className="border-gray-300 focus:border-green-500 focus:ring-green-500 flex-grow"
                     />
@@ -809,7 +776,7 @@ export default function UserSettingsPage() {
                   <Input
                     id="wallet-address"
                     name="walletAddress"
-                    value={user.walletAddress}
+                    value={mergedUser.walletAddress}
                     onChange={handleInputChange}
                     className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                   />
@@ -817,17 +784,17 @@ export default function UserSettingsPage() {
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="developer-mode"
-                    checked={user.theme === "dark"}
+                    checked={mergedUser.theme === "dark"}
                     onCheckedChange={(checked) =>
-                      setUser((prevUser) => ({
-                        ...prevUser,
+                      setChanges((prevChanges) => ({
+                        ...prevChanges,
                         theme: checked ? "dark" : "light",
                       }))
                     }
                     className="data-[state=checked]:bg-green-500"
                   />
                   <Label htmlFor="developer-mode" className="text-gray-700">
-                    Enable Developer Mode
+                    Dark Mode
                   </Label>
                 </div>
               </CardContent>
@@ -839,6 +806,7 @@ export default function UserSettingsPage() {
           <Button
             variant="outline"
             className="border-gray-300 text-gray-700 hover:bg-gray-100"
+            onClick={() => setChanges({})}
           >
             Cancel
           </Button>

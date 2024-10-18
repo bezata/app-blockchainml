@@ -1,16 +1,22 @@
 import React, { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Trash2, Download, ExternalLink, Search, Filter, ChevronDown, ChevronUp, Menu, X } from "lucide-react"
+import {
+  Trash2,
+  Download,
+  Search,
+  Filter,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { NavBar } from "@/components/nav-bar"
+import { NavBar } from "@/components/component/nav-bar";
 
 interface Dataset {
   id: string

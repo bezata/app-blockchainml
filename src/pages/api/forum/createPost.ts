@@ -31,12 +31,13 @@ export default async function handler(
       console.log("Token found, constructing session...");
       sessionData = {
         user: {
-          id: token.sub,
-          walletAddress: token.walletAddress as string,
-          apiKey: token.apiKey as string,
+          name: token.walletAddress as string,
+          email: token.apiKey as string,
         },
         expires: new Date((token.exp as number) * 1000).toISOString(),
         accessToken: token.accessToken as string,
+        address: token.walletAddress as string,
+        chainId: token.chainId as string,
       };
       console.log("Constructed session:", JSON.stringify(sessionData, null, 2));
     }
