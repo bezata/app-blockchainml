@@ -307,7 +307,12 @@ export default function UserProfilePage() {
                       className="flex items-center space-x-3"
                     >
                       <div className="bg-green-100 rounded-full p-2">
-                        <achievement.icon className="w-4 h-4 text-green-600" />
+                        {React.createElement(
+                          achievement.icon as React.ElementType,
+                          {
+                            className: "w-4 h-4 text-green-600",
+                          }
+                        )}
                       </div>
                       <div>
                         <p className="font-medium">{achievement.title}</p>
@@ -461,7 +466,9 @@ function ActivityItem({ activity }: { activity: Activity }) {
       <DialogTrigger asChild>
         <div className="flex items-start space-x-4 mb-4 cursor-pointer  hover:bg-gray-50 p-2 rounded-lg  transition-colors">
           <div className="bg-green-100 rounded-full p-2">
-            <activity.icon className="w-4 h-4 text-green-600" />
+            {React.createElement(activity.icon as React.ElementType, {
+              className: "w-4 h-4 text-green-600",
+            })}
           </div>
           <div>
             <p className="font-medium">{activity.title}</p>
@@ -472,7 +479,9 @@ function ActivityItem({ activity }: { activity: Activity }) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center">
-            <activity.icon className="w-5 h-5 mr-2" />
+            {React.createElement(activity.icon as React.ElementType, {
+              className: "w-5 h-5 mr-2",
+            })}
             {activity.title}
           </DialogTitle>
         </DialogHeader>

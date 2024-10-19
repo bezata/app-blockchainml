@@ -5,19 +5,17 @@ import type {
   SIWESession,
 } from "@reown/appkit-siwe";
 import { createSIWEConfig, formatMessage } from "@reown/appkit-siwe";
-import { polygon } from "@reown/appkit/networks";
-
-
-
+import { base, polygon } from "@reown/appkit/networks";
 
 export const siweConfig = createSIWEConfig({
-  // @ts-expect-error : TODO: fix this
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  //@ts-ignore
   getMessageParams: async () => ({
     domain: typeof window !== "undefined" ? window.location.host : "",
     uri: typeof window !== "undefined" ? window.location.origin : "",
-    chains: [polygon.id],
-    statement: "Sign in with Ethereum to the app",
-    version: "1",
+    chains: [polygon.id, base.id],
+    statement:
+      "Welcome to the BlockchainML! Verify your identity for next generation auth!",
   }),
 
   createMessage: ({ address, ...args }: SIWECreateMessageArgs) =>
@@ -34,28 +32,25 @@ export const siweConfig = createSIWEConfig({
   getSession: async () => {
     const session = await getSession();
     if (!session) {
-      return null;
+      throw new Error("Failed to get session!");
     }
+
     const { address, chainId } = session as unknown as SIWESession;
+
     return { address, chainId };
   },
 
   verifyMessage: async ({ message, signature }: SIWEVerifyMessageArgs) => {
     try {
-      const response = await signIn("credentials", {
+      const success = await signIn("credentials", {
         message,
-        signature,
         redirect: false,
+        signature,
         callbackUrl: "/protected",
       });
 
-      if (response?.error) {
-        console.error("Sign-in error:", response.error);
-        return false;
-      }
-      return response?.ok || false;
+      return Boolean(success?.ok);
     } catch (error) {
-      console.error("Verification error:", error);
       return false;
     }
   },
