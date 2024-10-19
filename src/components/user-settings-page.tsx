@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -61,28 +61,28 @@ export default function UserSettingsPage() {
     link: "",
   });
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      fetchUserSettings();
-    }
-  }, [status]);
-
-  const fetchUserSettings = async () => {
+  const fetchUserSettings = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await fetch("/api/user/settings");
-      if (!response.ok) {
-        throw new Error("Failed to fetch user settings");
-      }
+      if (!response.ok) throw new Error("Failed to fetch user settings");
       const data: UserSettings = await response.json();
       setUser(data);
       setChanges({});
+      setError(null);
     } catch (err) {
       setError("Error fetching user settings");
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchUserSettings();
+    }
+  }, [status, fetchUserSettings]);
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -107,7 +107,7 @@ export default function UserSettingsPage() {
     setChanges((prevChanges) => ({
       ...prevChanges,
       privacySettings: {
-        ...(prevChanges.privacySettings ?? {}),
+        ...prevChanges.privacySettings,
         [name]: value,
       } as PrivacySettings,
     }));
@@ -153,56 +153,76 @@ export default function UserSettingsPage() {
     }));
     setNewRepository({ name: "", link: "" });
   };
-
-  const handleSave = async () => {
-    if (!user) return;
-
+  console.log(session);
+  const handleSave = useCallback(async () => {
+    if (!user) {
+      console.error("No user data available");
+      return;
+    }
     try {
+      setLoading(true);
+      console.log("Sending update request with changes:", changes);
       const response = await fetch("/api/user/settings", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(changes),
+        credentials: "include",
       });
-
       if (!response.ok) {
-        throw new Error("Failed to update user settings");
+        const errorData = await response.json();
+        console.error("Server responded with an error:", errorData);
+        throw new Error(errorData.error || "Failed to update user settings");
       }
 
       const updatedUser: UserSettings = await response.json();
+      console.log("Received updated user data:", updatedUser);
       setUser(updatedUser);
       setChanges({});
+      setError(null);
       console.log("User settings updated successfully");
     } catch (err) {
-      setError("Error updating user settings");
-      console.error(err);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setError(`Error updating user settings: ${errorMessage}`);
+      console.error("Error in handleSave:", err);
+    } finally {
+      setLoading(false);
     }
-  };
-
+  }, [user, changes]);
   const handleRenewApiKey = async () => {
     try {
-      const response = await fetch("/api/user/settings", {
-        method: "PATCH",
+      setLoading(true);
+      const response = await fetch("/api/user/renew-api-key", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ renewApiKey: true }),
+        body: JSON.stringify({ action: "renew-api-key" }),
+        credentials: "include",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to renew API key");
+        const errorData = await response.json();
+        console.error("API Key renewal error:", errorData);
+        throw new Error(
+          `Failed to renew API key: ${errorData.error || response.statusText}`
+        );
       }
 
-      const updatedUser: UserSettings = await response.json();
-      setUser(updatedUser);
+      const { apiKey } = await response.json();
+      setUser((prevUser) => (prevUser ? { ...prevUser, apiKey } : null));
+      setError(null);
       console.log("API key renewed successfully");
     } catch (err) {
-      setError("Error renewing API key");
+      setError(
+        `Error renewing API key: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
-
   const handleRemoveProject = (id: string) => {
     if (!user) return;
 

@@ -1,14 +1,15 @@
 // pages/api/user/settings.ts
 import { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "next-auth/react";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:4000"; // Adjust this to your backend URL
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:4000";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = await getSession({ req });
+  const session = await getServerSession(req, res, authOptions);
 
   if (!session) {
     return res.status(401).json({ error: "Authentication required" });
@@ -23,6 +24,7 @@ export default async function handler(
       headers: {
         Cookie: cookies,
         "Content-Type": "application/json",
+        Authorization: `Bearer ${session.accessToken}`,
       },
       credentials: "include",
     };
@@ -48,6 +50,12 @@ export default async function handler(
 
     if (!response.ok) {
       return res.status(response.status).json(data);
+    }
+
+    // Forward any set-cookie headers from the backend
+    const setCookieHeader = response.headers.get("set-cookie");
+    if (setCookieHeader) {
+      res.setHeader("Set-Cookie", setCookieHeader);
     }
 
     return res.status(200).json(data);
