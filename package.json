@@ -51,11 +51,12 @@
     "siwe": "^2.3.2",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
-    "viem": "^2.21.29",
+    "viem": "^2.21.30",
     "wagmi": "^2.12.20"
   },
   "devDependencies": {
     "@types/formidable": "^3.4.5",
+    "@types/lodash": "^4.17.12",
     "@types/multiparty": "^4.2.1",
     "@types/node": "^20.16.13",
     "@types/papaparse": "^5.3.15",

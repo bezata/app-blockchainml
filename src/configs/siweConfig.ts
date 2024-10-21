@@ -78,10 +78,8 @@ export const siweConfig = createSIWEConfig({
     // Perform any additional actions on sign out
   },
 
-  enabled: true,
   nonceRefetchIntervalMs: 300000, // 5 minutes
   sessionRefetchIntervalMs: 300000, // 5 minutes
   signOutOnDisconnect: true,
   signOutOnAccountChange: true,
-  signOutOnNetworkChange: true,
 });

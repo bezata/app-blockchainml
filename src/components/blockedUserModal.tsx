@@ -84,7 +84,7 @@ export const BlockedUsersModal = ({
                   variant="outline"
                   size="sm"
                   onClick={() => onUnblock(user.id)}
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  className="text-red-500 hover:text-red-700 font-semibold hover:bg-red-50"
                 >
                   Unblock
                 </Button>
@@ -93,7 +93,12 @@ export const BlockedUsersModal = ({
           )}
         </ScrollArea>
         <DialogFooter>
-          <Button onClick={onClose}>Close</Button>
+          <Button
+            className="bg-green-500 hover:bg-green-700 font-semibold text-white"
+            onClick={onClose}
+          >
+            Close
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

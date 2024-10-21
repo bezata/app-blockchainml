@@ -27,6 +27,7 @@ export interface UserSettings {
   comments: Comment[];
   sessions: Session[];
   refreshTokens: RefreshToken[];
+  lastLoginAt: Date | null;
 }
 
 export interface NotificationPreferences {
@@ -38,7 +39,7 @@ export interface NotificationPreferences {
 export interface PrivacySettings {
   id: string;
   userId: string;
-  profileVisibility: string;
+  profileVisibility: 'PUBLIC' | 'PRIVATE';
   showEmail: boolean;
 }
 
@@ -104,14 +105,14 @@ export interface Comment {
 
 export interface Session {
   id: string;
-  userId: string;
+  userWalletAddress: string;
   token: string;
   createdAt: Date;
   expiresAt: Date;
   lastActivity: Date;
   ipAddress: string | null;
   userAgent: string | null;
-  deviceInfo: JSON | null;
+  deviceInfo: Record<string, string> | null;
   isValid: boolean;
 }
 

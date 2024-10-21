@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,6 +9,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   User,
   Lock,
@@ -22,17 +31,8 @@ import {
   Twitter,
   Settings,
 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { NavBar } from "@/components/component/nav-bar";
 import { Separator } from "@/components/ui/separator";
-import { useSession } from "next-auth/react";
 import {
   UserSettings,
   Project,
@@ -56,10 +56,9 @@ export default function UserSettingsPage() {
   });
   const [newRepository, setNewRepository] = useState<
     Omit<Repository, "id" | "userId">
-  >({
-    name: "",
-    link: "",
-  });
+  >({ name: "", link: "" });
+
+  const mergedUser = useMemo(() => ({ ...user, ...changes }), [user, changes]);
 
   const fetchUserSettings = useCallback(async () => {
     try {
@@ -77,6 +76,7 @@ export default function UserSettingsPage() {
       setLoading(false);
     }
   }, []);
+
   useEffect(() => {
     if (status === "authenticated") {
       fetchUserSettings();
@@ -102,7 +102,7 @@ export default function UserSettingsPage() {
 
   const handlePrivacyChange = (
     name: keyof PrivacySettings,
-    value: string | boolean
+    value: "PUBLIC" | "PRIVATE" | boolean
   ) => {
     setChanges((prevChanges) => ({
       ...prevChanges,
@@ -127,11 +127,10 @@ export default function UserSettingsPage() {
   };
 
   const handleAddProject = () => {
-    if (!user || !newProject.name) return;
-
+    if (!newProject.name || !mergedUser.id) return;
     const updatedProjects: Project[] = [
-      ...(user.projects || []),
-      { ...newProject, id: Date.now().toString(), userId: user.id },
+      ...(mergedUser.projects || []),
+      { ...newProject, id: Date.now().toString(), userId: mergedUser.id },
     ];
     setChanges((prevChanges) => ({
       ...prevChanges,
@@ -139,13 +138,11 @@ export default function UserSettingsPage() {
     }));
     setNewProject({ name: "", description: "", link: "" });
   };
-
   const handleAddRepository = () => {
-    if (!user || !newRepository.name || !newRepository.link) return;
-
+    if (!newRepository.name || !newRepository.link || !mergedUser.id) return;
     const updatedRepositories: Repository[] = [
-      ...(user.repositories || []),
-      { ...newRepository, id: Date.now().toString(), userId: user.id },
+      ...(mergedUser.repositories || []),
+      { ...newRepository, id: Date.now().toString(), userId: mergedUser.id },
     ];
     setChanges((prevChanges) => ({
       ...prevChanges,
@@ -153,15 +150,11 @@ export default function UserSettingsPage() {
     }));
     setNewRepository({ name: "", link: "" });
   };
-  console.log(session);
   const handleSave = useCallback(async () => {
-    if (!user) {
-      console.error("No user data available");
-      return;
-    }
+    if (Object.keys(changes).length === 0) return;
+
     try {
       setLoading(true);
-      console.log("Sending update request with changes:", changes);
       const response = await fetch("/api/user/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -170,63 +163,54 @@ export default function UserSettingsPage() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Server responded with an error:", errorData);
         throw new Error(errorData.error || "Failed to update user settings");
       }
-
       const updatedUser: UserSettings = await response.json();
-      console.log("Received updated user data:", updatedUser);
       setUser(updatedUser);
       setChanges({});
       setError(null);
-      console.log("User settings updated successfully");
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      setError(`Error updating user settings: ${errorMessage}`);
-      console.error("Error in handleSave:", err);
+      setError(
+        `Error updating user settings: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
     } finally {
       setLoading(false);
     }
-  }, [user, changes]);
+  }, [changes]);
+
   const handleRenewApiKey = async () => {
     try {
       setLoading(true);
       const response = await fetch("/api/user/renew-api-key", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "renew-api-key" }),
         credentials: "include",
       });
-
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("API Key renewal error:", errorData);
         throw new Error(
           `Failed to renew API key: ${errorData.error || response.statusText}`
         );
       }
-
       const { apiKey } = await response.json();
       setUser((prevUser) => (prevUser ? { ...prevUser, apiKey } : null));
       setError(null);
-      console.log("API key renewed successfully");
     } catch (err) {
       setError(
         `Error renewing API key: ${
           err instanceof Error ? err.message : String(err)
         }`
       );
-      console.error(err);
     } finally {
       setLoading(false);
     }
   };
-  const handleRemoveProject = (id: string) => {
-    if (!user) return;
 
-    const updatedProjects = user.projects.filter(
+  const handleRemoveProject = (id: string) => {
+    const updatedProjects = (mergedUser.projects || []).filter(
       (project) => project.id !== id
     );
     setChanges((prevChanges) => ({
@@ -236,9 +220,7 @@ export default function UserSettingsPage() {
   };
 
   const handleRemoveRepository = (id: string) => {
-    if (!user) return;
-
-    const updatedRepositories = user.repositories.filter(
+    const updatedRepositories = (mergedUser.repositories || []).filter(
       (repo) => repo.id !== id
     );
     setChanges((prevChanges) => ({
@@ -246,8 +228,6 @@ export default function UserSettingsPage() {
       repositories: updatedRepositories,
     }));
   };
-
-  const mergedUser = { ...user, ...changes };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 px-4 sm:px-6 lg:px-8">
@@ -514,7 +494,10 @@ export default function UserSettingsPage() {
                   <Select
                     value={mergedUser.privacySettings?.profileVisibility || ""}
                     onValueChange={(value) =>
-                      handlePrivacyChange("profileVisibility", value)
+                      handlePrivacyChange(
+                        "profileVisibility",
+                        value as "PUBLIC" | "PRIVATE"
+                      )
                     }
                   >
                     <SelectTrigger
@@ -833,8 +816,9 @@ export default function UserSettingsPage() {
           <Button
             onClick={handleSave}
             className="bg-green-500 hover:bg-green-600 text-white"
+            disabled={loading || Object.keys(changes).length === 0}
           >
-            Save Changes
+            {loading ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </div>
